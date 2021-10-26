@@ -1,0 +1,40 @@
+
+\documentclass{llncs} 
+
+\title{CP-8320 Project Proposal: DeeperXSS}
+\author{Dawson Brown, 500780579\\Matthew Bush, ...}
+\institute{Ryerson University}
+
+\date{}
+\begin{document}
+\maketitle
+\pagestyle{plain}
+
+
+\section{Introduction}
+For our project, we intend on attempting to recreate and extend the work of DeepXSS by Fang \textit{et. al}. \cite{fang2018deepxss}
+
+\section{Background and Motivation}
+
+
+\section{Project Outcomes}
+To begin, we will simply recreate the architecture outlined in their original DeepXSS paper \cite{fang2018deepxss}. This will include:
+
+\begin{enumerate}
+    \item creating a custom recursive decoder that can decode several common encoding schemes (including base64, hex, URL, UTF-7, etc.) and can decode multi-encoded strings 
+    \item building a generalizer to remove string literals, numbers, and control characters (as per the paper's method).
+    \item building Javascript tokenizer
+    \item Training a CBOW model against a Corpus of Javascript payloads
+    \item Training an LSTM-classifier with sequences of CBOW vectors representing sequences of Javascript tokens in a payload.
+\end{enumerate}
+
+We will used the same datasets that were used in the original DeepXSS paper. For malicious samples that's the XSSed database (http://www.xssed.com/), and for legitimate samples, that's the DMOZ database (http://dmoztools.net/). In total there were 33,426 malicious samples and 31,407 legitimate samples. To evaluate the classifier, 10-fold cross validation will be used. 
+
+In order to extend on this work, we will be comparing the accuracy of the LSTM classifier using CBOW to vectorize the tokens with an LSTM classifier that doesn't use CBOW and instead uses nondescript token IDs. This LSTM classifier will also be evaluated with 10-fold cross validation. In this way we hope to show that using CBOW is, or is not, an important step in the efficacy of the classifier. In order to guage the usefulness of the LSTM, both LSTM models (with and without CBOW) will be compared to a traditional XSS detector that will work directly with the decoded XSS (skipping the tokenization, generalization, and training). Performing these three experiments in tandem should shed light on which parts of the DeepXSS are valuable contributions and which are not. 
+
+
+\newpage
+\bibliography{ref}
+\bibliographystyle{splncs04}
+
+\end{document}
