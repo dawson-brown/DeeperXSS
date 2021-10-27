@@ -2,7 +2,7 @@
 \documentclass{llncs} 
 
 \title{CP-8320 Project Proposal: DeeperXSS}
-\author{Dawson Brown, 500780579\\Matthew Bush, ...}
+\author{Dawson Brown, 500780579\\Matthew Bush, 500770831}
 \institute{Ryerson University}
 
 \date{}
@@ -12,13 +12,13 @@
 
 
 \section{Introduction}
-For our project, we intend on attempting to recreate and extend the work of DeepXSS by Fang \textit{et. al}. \cite{fang2018deepxss}
+Cross-site scripting (XSS) attacks persist as a major issue for web applications despite their root causes being well understood. The Open Web Application Security Project consistently ranks XSS in the top ten vulnerabilities on the web. For this reason, there exists a large body of work aimed at automating the detection and prevention of XSS attacks; this includes approaches using Machine Learning techniques to detect both attacks and vulnerabilities. DeepXSS is an LSTM classifier that is meant to detect XSS payloads; it was designed by Fang \textit{et. al} and is purported to have very high precision and recall rates. For our project, we intend to recreate and extend the work of DeepXSS by Fang \textit{et. al} \cite{fang2018deepxss}. We want to more clearly outline and comment on the strengths and weaknesses of their architecture as well as replicate their purported results.\cite{fang2018deepxss}. 
 
-\section{Background and Motivation}
-
+\section{Motivation}
+The primary motivation for this work is to verify Fang \textit{et. al}’s DeepXSS method of detecting cross-site scripting (XSS) attack payloads \cite{fang2018deepxss}. Given that XSS is a significant problem for many web applications, the need for further research into the detection of XSS attack payloads is apparent.  Unfortunately, we found that this paper lacked detail and failed to address key questions related to the work.  Given DeepXSS’ promising results, it would be very useful to address the lack of detail, and attempt to replicate the methods used by the authors.  In verifying these results we could further our understanding of why DeepXSS was so effective (or why it was not as effective as it seemed) and apply lessons to future research.
 
 \section{Project Outcomes}
-To begin, we will simply recreate the architecture outlined in their original DeepXSS paper \cite{fang2018deepxss}. This will include:
+To begin, we will simply recreate the architecture outlined in the original DeepXSS paper \cite{fang2018deepxss}. This will include:
 
 \begin{enumerate}
     \item creating a custom recursive decoder that can decode several common encoding schemes (including base64, hex, URL, UTF-7, etc.) and can decode multi-encoded strings 
@@ -30,7 +30,9 @@ To begin, we will simply recreate the architecture outlined in their original De
 
 We will used the same datasets that were used in the original DeepXSS paper. For malicious samples that's the XSSed database (http://www.xssed.com/), and for legitimate samples, that's the DMOZ database (http://dmoztools.net/). In total there were 33,426 malicious samples and 31,407 legitimate samples. To evaluate the classifier, 10-fold cross validation will be used. 
 
-In order to extend on this work, we will be comparing the accuracy of the LSTM classifier using CBOW to vectorize the tokens with an LSTM classifier that doesn't use CBOW and instead uses nondescript token IDs. This LSTM classifier will also be evaluated with 10-fold cross validation. In this way we hope to show that using CBOW is, or is not, an important step in the efficacy of the classifier. In order to guage the usefulness of the LSTM, both LSTM models (with and without CBOW) will be compared to a traditional XSS detector that will work directly with the decoded XSS (skipping the tokenization, generalization, and training). Performing these three experiments in tandem should shed light on which parts of the DeepXSS are valuable contributions and which are not. 
+In order to extend on this work, we will be comparing the accuracy of the LSTM classifier using CBOW to vectorize the tokens (this is the DeepXSS architecture) with an LSTM classifier that doesn't use CBOW and instead uses nondescript token IDs instead of learned vector representations. This new LSTM classifier will also be evaluated with 10-fold cross validation. In this way we hope to show that using CBOW is, or is not, an important step in the efficacy of the classifier. 
+
+Addition to gauging the usefulness of CBOW in the DeepXSS architecture, we also want to gauge the usefulness of the LSTM. Both LSTM models above (with and without CBOW) will be compared to a traditional XSS detector that will work directly with the decoded XSS (skipping the tokenization, generalization, and training). Performing these three experiments in tandem should shed light on which parts of DeepXSS are valuable contributions and which are not. 
 
 
 \newpage
