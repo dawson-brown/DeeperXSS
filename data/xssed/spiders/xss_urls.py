@@ -16,7 +16,7 @@ class XssUrlsSpider(scrapy.Spider):
     def parse_url(self, response):
         url = response.xpath('//table/tr/th/table/tr/th[@id="contentpaneOpen"]/table/div//th/text()')[11].get()
         yield {
-            'mirror': response.url.split("/")[-2],
+            # 'mirror': response.url.split("/")[-2],
             'url': url[5:]
         }
 
