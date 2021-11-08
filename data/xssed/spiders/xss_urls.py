@@ -1,4 +1,5 @@
 import scrapy
+from bs4 import BeautifulSoup
 
 class XssUrlsSpider(scrapy.Spider):
     name = 'xss_urls'
@@ -14,9 +15,11 @@ class XssUrlsSpider(scrapy.Spider):
             yield response.follow(next_page, self.parse)
 
     def parse_url(self, response):
-        url = response.xpath('//table/tr/th/table/tr/th[@id="contentpaneOpen"]/table/div//th/text()')[11].get()
+        url = response.xpath('//th[@id="contentpaneOpen"]/table//tr/th')[9].get()
+        th = BeautifulSoup(url)
+        url_str = th.get_text()[5:]
+        
         yield {
-            # 'mirror': response.url.split("/")[-2],
-            'url': url[5:]
+            'url': url_str
         }
 
