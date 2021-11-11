@@ -4,73 +4,71 @@ from enum import Enum
 from base64 import b64decode
 from urllib import parse
 from html import unescape
+import string
 
 class DeepURL:
 
     def __init__(self, url: str):
         self.parsed_url = urlparse(url)
         self.query = self.parsed_url.query
+        self._decodings = [
+            self._de_us_ascii_decode,
+            self._de_utf7_decode,
+            self._de_url_decode,
+            self._de_html_decode,
+            self._de_dword_decode,
+            self._de_hex_decode,
+            self._de_base64_decode
+        ]
     
-    def _de_us_ascii_decode(self, string : str) -> Tuple[bool, str]:
+    def _de_us_ascii_decode(self, query_string : str) -> Tuple[bool, str]:
         pass
 
-    def _de_utf7_decode(self, string : str) -> Tuple[bool, str]:
+    def _de_utf7_decode(self, query_string : str) -> Tuple[bool, str]:
         pass
     
-    def _de_url_decode(self, string : str) -> Tuple[bool, str]:
-        if string.find('%') == -1:
+    def _de_url_decode(self, query_string : str) -> Tuple[bool, str]:
+        if query_string.find('%') == -1:
             raise ValueError
-        return parse.unquote(string)
+        return parse.unquote(query_string)
 
-    def _de_html_decode(self, string : str) -> Tuple[bool, str]:
-        return unescape(string)
+    def _de_html_decode(self, query_string : str) -> Tuple[bool, str]:
+        return unescape(query_string)
 
-    def _de_dword_decode(string : str) -> Tuple[bool, str]:
+    def _de_dword_decode(query_string : str) -> Tuple[bool, str]:
         pass
 
-    def _de_hex_decode(self, string : str) -> Tuple[bool, str]:
-        return bytes.fromhex(string).decode("utf-8")
+    def _de_hex_decode(self, query_string : str) -> Tuple[bool, str]:
+        return bytes.fromhex(query_string).decode("utf-8")
 
-    def _de_octal_decode(self, string : str) -> Tuple[bool, str]:
+    def _de_octal_decode(self, query_string : str) -> Tuple[bool, str]:
         pass
 
-    def _de_base64_decode(self, string : str) -> Tuple[bool, str]:
-        string = string.replace('-', '=')\
+    def _de_base64_decode(self, query_string : str) -> Tuple[bool, str]:
+        query_string = query_string.replace('-', '=')\
                 .replace('.', '+')\
                 .replace('_', '/')
 
-        return b64decode(string).decode("utf-8")
+        return b64decode(query_string).decode("utf-8")
 
-    def _de_decode(self, string : str) -> Tuple[bool, str]:
+    def _de_decode(self, query_string : str) -> Tuple[bool, str]:
         
-        # put decode methods in array--loop over (makes easier to add to)
-        (usascii, usascii_dec) = self._de_us_ascii_decode(string)
-        (base64, base64_dec) = self._de_base64_decode(string)
-        (octal, octal_dec) = self._de_octal_decode(string)
-        (hex, hex_dec) = self._de_hex_decode(string)
-        (dword, dword_dec) = self._de_dword_decode(string)
-        (html, html_dec) = self._de_html_decode(string)
-        (url, url_dec) = self._de_url_decode(string)
-        (utf7, utf7_dec) = self._de_utf7_decode(string)
+        all_decodings = list()
+        for decoder in self._decodings:
+            all_decodings.append( decoder(query_string) )
 
-        if usascii:
-            (usascii, usascii_dec) = self._de_decode(usascii_dec)
-        if base64:
-            (base64, base64_dec) = self._de_decode(base64_dec)
-        if octal:
-            (octal, octal_dec) = self._de_decode(octal_dec)
-        if hex:
-            (hex, hex_dec) = self._de_decode(hex_dec)
-        if dword:
-            (dword, dword_dec) = self._de_decode(dword_dec)
-        if html:
-            (html, html_dec) = self._de_decode(html_dec)
-        if url:
-            (url, url_dec) = self._de_decode(url_dec)
-        if utf7:
-            (utf7, utf7_dec) = self._de_decode(utf7_dec)
+        for past, dec_str in all_decodings:
+            if past:
+                (next_past, next_dec_str) = self._de_decode(dec_str)
+                if next_past and any(c not in string.printable for c in next_dec_str):
+                    return (True, next_dec_str)
+                else:
+                    return (False, next_dec_str)
 
-        return (True, string)
+        if any(c not in string.printable for c in query_string):
+            return (True, query_string)
+        else:
+            return (False, query_string)
 
 
     def decode_query(self, encoding : str) -> Tuple[bool, str]:
