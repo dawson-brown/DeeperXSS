@@ -11,7 +11,7 @@ from pickle import dump, load
 tokens = {
     'start_label': re.compile('<[^>/\s]+>?'),
     'end_label': re.compile('</[^>^/]+>'),
-    'events': re.compile('on[a-zA-Z]*='),
+    'events': re.compile('on[a-zA-Z]+='),
     'function_name': re.compile('(?:[a-zA-Z$_][a-zA-Z$_0-9]+\.)*[a-zA-Z$_][a-zA-Z$_0-9]+\('),
     'variable': re.compile('(?:[a-zA-Z$_][a-zA-Z$_0-9]+\.)*[a-zA-Z$_][a-zA-Z$_0-9]+\(?'),
     'string_arg' : re.compile('\(\w*\"(?:(\\(\\|n|r|\')|[^\\\n\r\'])*\"\w*\)'),
@@ -37,7 +37,7 @@ def trim_url(url: str):
     url = urlparse(url)
     return url.path + '?' + url.query + '#' + url.fragment
 
-def ordered_interval_contains(first: Tuple[int, int], second: Tuple[int, int] ) -> bool:
+def ordered_interval_overlaps(first: Tuple[int, int], second: Tuple[int, int] ) -> bool:
     a, b = first
     c, d = second
 
@@ -49,7 +49,7 @@ def prune_tokens(sorted_tokens: List[Tuple[str, JSToken]]) -> List[Tuple[str, JS
     pruned_tokens = list([curr])
 
     for token in sorted_tokens[1:]:
-        if ordered_interval_contains( (curr[1].start, curr[1].end), (token[1].start, token[1].end) ):
+        if ordered_interval_overlaps( (curr[1].start, curr[1].end), (token[1].start, token[1].end) ):
             pass
         else:
             pruned_tokens.append(token)
@@ -70,21 +70,28 @@ def tokenize(url: str) -> List[Tuple[str, JSToken]]:
 
 if __name__ == "__main__":
 
-    with open('dec_xss_urls.txt', 'r') as infile, \
-            open('xss_tokens.txt', 'ab') as outfile:
+    with open('dmoz_dir.txt', 'r') as infile, \
+            open('dmoz_tokens.txt', 'ab') as outfile:
         lines = infile.read().splitlines()
         for i in range(10):
             url = choice(lines)
             tmp = URLTokens(url, tokenize(url))
             dump(tmp, outfile)
 
-    # print('\n\nPickle Load:\n')
-    # with open('xss_tokens.txt', "rb") as f:
-    #     while True:
-    #         try:
-    #             tmp = load(f)
-    #         except EOFError:
-    #             break
+            for a,b in tmp.token_list:
+                print(f'{a} : {b}')
+            print('')
+
+    print('\n\nPickle Load:\n')
+    with open('dmoz_tokens.txt', "rb") as f:
+        while True:
+            try:
+                tmp = load(f)
+                for a,b in tmp.token_list:
+                    print(f'{a} : {b}')
+                print('')
+            except EOFError:
+                break
 
         # for line in lines:
         #     tmp = JSTokenizer(DeepURL(line))
