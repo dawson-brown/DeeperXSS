@@ -1,4 +1,5 @@
 from pickle import dump, load
+from ..data.tokenizer import URLTokens, JSToken
 
 def load_tokenized_urls(filename: str):
 
