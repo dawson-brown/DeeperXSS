@@ -20,6 +20,7 @@ def xss_filter(filename: str):
     print(f'total: {total}, total filtered: {total_filtered}, total not filtered: {total_not_filtered}')
     print(f'Precision: {total_filtered / total}\n')
 
+
 def main():
     xss_filter('../data/xss_urls.txt')
     xss_filter('../data/dec_xss_urls.txt')

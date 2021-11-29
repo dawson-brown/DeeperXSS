@@ -16,7 +16,7 @@ def main():
     
     for tokenized_url in load_tokenized_urls(''):
         for token in tokenized_url:
-            pass
+            value = token.value
 
     
 
