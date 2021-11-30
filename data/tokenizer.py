@@ -85,7 +85,10 @@ def print_token_list(url_tok: URLTokens):
         print(token)
     print('')
 
-def tokenize_to_file(in_name: str, out_name: str, start_line = 0, end_line = -1):
+def tokenize_to_file(in_name: str, start_line = 0, end_line = -1):
+
+    out_name = f'{in_name}_{start_line}-{end_line}.dat'
+
     with open(in_name, 'r') as infile, \
         open(out_name, 'ab') as outfile:
         lines = infile.read().splitlines()
@@ -119,7 +122,7 @@ if __name__ == "__main__":
             end_i = argv[2]
 
     print(f'XSSed...{start_i} - {end_i}')
-    tokenize_to_file('dec_xss_urls.txt', 'dec_xss_tokens.dat', int(start_i), int(end_i))
+    tokenize_to_file('dec_xss_urls.txt', int(start_i), int(end_i))
 
     # url = 'http://website/5700-4-0-1.html?path=http://www.zdnet.com/1383-4-44.html?path=http://talkback.zdnet.com/5208-12558-0-1.html?siteID=24&forumID=1&threadID=53856&ct=null&messageID=1019276&start=-1&reply=true&subject=RE: Microsoft ranks Windows 7 features most likely to affect app-compatibility®ister=true&email="><script src = \'http://www.reelix.za.net/reexss.js\'></script>&password=&passwordConf=&username=&firstName=&lastName=&company=&address1=&address2=&city=&country=US&state=&postalCode=&phone=&JOBCAT=NOTSELECTED&jobFunction=NOTSELECTED&industry=NOTSELECTED&companySize=NOTSELECTED&newsletters=e580:INTERNAL_NEWSLETTER&newsletters=e590:INTERNAL_NEWSLETTER&newsletters=e589:INTERNAL_NEWSLETTER&newsletters=e539:INTERNAL_NEWSLETTER&newsletters=e550:INTERNAL_NEWSLETTER&rememberMe=true&submit.x=63&submit.y=10'
     # tmp = URLTokens(url, tokenize(url))
