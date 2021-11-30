@@ -7,19 +7,16 @@ from pickle import dump
 from sys import argv
 
 
-
+# 'num_arg' : re.compile('[0-9]+\.?[0-9]*\)'),
+# 'function_name': re.compile('(?:[a-zA-Z$_][a-zA-Z$_0-9]*\.)*[a-zA-Z$_][a-zA-Z$_0-9]*\('),
 tokens = {
     'start_label': re.compile('<[^>\s/]+(>|\s)'),
     'end_label': re.compile('</[^>/]+>'),
     'events': re.compile('on[a-zA-Z]+='),
-    'function_name': re.compile('(?:[a-zA-Z$_][a-zA-Z$_0-9]*\.)*[a-zA-Z$_][a-zA-Z$_0-9]*\('),
     'identifier': re.compile('(?:[a-zA-Z$_][a-zA-Z$_0-9]*\.)*[a-zA-Z$_][a-zA-Z$_0-9]*'),
-    'string_arg' : re.compile('\s*(\"(?:(\\(\\|n|r|\')|[^\\\n\r\"])*\"|\'(?:(\\(\\|n|r|\")|[^\\\n\r\'])*\')\s*\)'),
-    'num_arg' : re.compile('(0|[1-9][0-9]*)\.?[0-9]*\)'),
-    # 'assign_constant': re.compile('=(0|[1-9][0-9]*\.?[0-9]*)|=(\"(?:(\\(\\|n|r|\')|[^\\\n\r\"])*\"|\'(?:(\\(\\|n|r|\")|[^\\\n\r\'])*\')'),
-    'int_constant': re.compile('(0|[1-9][0-9]*)'),
-    'script_url': re.compile('[a-zA-Z]*script:'),
-    'other': re.compile('\{\[|\]|\.|\.\.\.|\;|\,|<|>|<=|>=|==|!=|===|!==|\+|-|\*|%|\*\*|\+\+|--|<<|>>|>>>|&|\||\^|!|~|&&|\|\||\?\?|\?|:|=|\+=|-=|\*=|%=|\*\*=|<<=|>>=|>>>=|&=|\|=|\^=|&&=|\|\|=|\?\?=|=>|/|\'|"')
+    # 'string_arg' : re.compile('\s*(\"(?:(\\(\\|n|r|\')|[^\\\n\r\"])*\"|\'(?:(\\(\\|n|r|\")|[^\\\n\r\'])*\')\s*\)'),
+    'int_constant': re.compile('[0-9]+\.?[0-9]*'),
+    'other': re.compile('\{\[|\]|\.|\;|\,|<|>|=|!|\+|-|\*|%|&|\||\^|~|\?|:|/|\'|"')
 }
 
 @dataclass
@@ -70,10 +67,17 @@ def tokenize(url: str) -> List[JSToken]:
     for token_type in tokens:
         for matched in tokens[token_type].finditer(url):
             if token_type == 'start_label':
-                match_str = matched.group(0)[:-1] + '>'
-            else: 
-                match_str = matched.group(0)
-            token_list.append( ( JSToken(token_type, match_str, matched.start(), matched.end()) ) )
+                token_list.append( ( JSToken(token_type, matched.group(0)[:-1] + '>', matched.start(), matched.end()) ) )
+            elif token_type == 'identifier':
+                if matched.end() < len(url) and url[matched.end()]  == '(':
+                    token_list.append( ( JSToken('function_name', matched.group(0), matched.start(), matched.end()) ) )
+                    arg_end = url.find(')', matched.end())
+                    if arg_end != -1:
+                        token_list.append( JSToken('args', url[matched.end():arg_end+1], matched.end(), arg_end+1) )
+                else:
+                    token_list.append( ( JSToken(token_type, matched.group(0), matched.start(), matched.end()) ) )
+            else:
+                token_list.append( ( JSToken(token_type, matched.group(0), matched.start(), matched.end()) ) )
 
     sorted_tokens = prune_tokens(token_list)
     return sorted_tokens
@@ -99,19 +103,20 @@ def tokenize_to_file(in_name: str, start_line = 0, end_line = -1):
             if i%100 == 0:
                 print(f'\tLine: {i}')
             tmp = URLTokens(url, tokenize(url))
+            # print_token_list(tmp)
             dump(tmp, outfile)
 
 if __name__ == "__main__":
 
-    # print('DMOZ...')
-    # with open('dmoz_dir.txt', 'r') as infile, \
-    #     open('dmoz_tokens.dat', 'ab') as outfile:
+    # print('XSSed...')
+    # with open('dec_xss_urls.txt', 'r') as infile, \
+    #     open('dec_xss_urls.dat', 'ab') as outfile:
     #     lines = infile.read().splitlines()
-    #     for i, url in enumerate(lines):
-    #         if i%100 == 0:
-    #             print(f'\tLine: {i}')
+    #     for i in range(10):
+    #         url = choice(lines)
     #         tmp = URLTokens(url, tokenize(url))
-    #         dump(tmp, outfile)
+    #         print_token_list(tmp)
+            # dump(tmp, outfile)
 
     start_i = 0
     end_i = -1
@@ -122,12 +127,9 @@ if __name__ == "__main__":
             end_i = argv[2]
 
     print(f'XSSed...{start_i} - {end_i}')
-    tokenize_to_file('dec_xss_urls.txt', int(start_i), int(end_i))
+    tokenize_to_file('dmoz_dir.txt', int(start_i), int(end_i))
 
-    # url = 'http://website/5700-4-0-1.html?path=http://www.zdnet.com/1383-4-44.html?path=http://talkback.zdnet.com/5208-12558-0-1.html?siteID=24&forumID=1&threadID=53856&ct=null&messageID=1019276&start=-1&reply=true&subject=RE: Microsoft ranks Windows 7 features most likely to affect app-compatibility®ister=true&email="><script src = \'http://www.reelix.za.net/reexss.js\'></script>&password=&passwordConf=&username=&firstName=&lastName=&company=&address1=&address2=&city=&country=US&state=&postalCode=&phone=&JOBCAT=NOTSELECTED&jobFunction=NOTSELECTED&industry=NOTSELECTED&companySize=NOTSELECTED&newsletters=e580:INTERNAL_NEWSLETTER&newsletters=e590:INTERNAL_NEWSLETTER&newsletters=e589:INTERNAL_NEWSLETTER&newsletters=e539:INTERNAL_NEWSLETTER&newsletters=e550:INTERNAL_NEWSLETTER&rememberMe=true&submit.x=63&submit.y=10'
+    # url = 'http://website/Hotel-Search?action=hotelSearchWizard@searchHotelOnly&hotelSearchWizard_inpItid=&hotelSearchWizard_inpItty=&hotelSearchWizard_inpItdx=&hotelSearchWizard_inpSearchMethod=usertyped&hotelSearchWizard_inpSearchKeywordIndex=&hotelSearchWizard_inpSearchKeyword=&hotelSearchWizard_inpSearchRegionId=&hotelSearchWizard_inpSearchLatitude=&hotelSearchWizard_inpSearchLongitude=&hotelSearchWizard_inpSearchNear=/"><script>alert(\'Xss ByAtm0n3r\')</script>&hotelSearchWizard_inpSearchNearType=CITY&hotelSearchWizard_inpSearchNearStreetAddr=&hotelSearchWizard_inpSearchNearCity=&hotelSearchWizard_inpSearchNearState=&hotelSearchWizard_inpSearchNearZipCode=&hotelSearchWizard_inpCheckIn=jj/mm/aa&hotelSearchWizard_inpCheckOut=jj/mm/aa&hotelSearchWizard_inpNumRooms=1&hotelSearchWizard_inpNumAdultsInRoom=1&hotelSearchWizard_inpNumChildrenInRoom=0&hotelSearchWizard_inpAddOptionFlag=&hotelSearchWizard_inpHotelName=&hotelSearchWizard_inpHotelClass=0&searchWizard_wizardType=hotelOnly'
     # tmp = URLTokens(url, tokenize(url))
     # print_token_list(tmp)
-        # for line in lines:
-        #     tmp = JSTokenizer(DeepURL(line))
-
-    # tmp = JSTokenizer(DeepURL('http://website/projects/eva/details.php?ta="><img src=vbscript:document.write("By_SecreT")><script>alert(2)</script>'))
+        
