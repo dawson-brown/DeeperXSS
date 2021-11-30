@@ -22,13 +22,12 @@ import matplotlib.pyplot as plt
 
 ## for tokens
 from pickle import dump, load
-from ..data.tokenizer import URLTokens, JSToken
+from data.tokenizer import URLTokens, JSToken 
 
 ## LSTM based on DeepXSS by Yong Fang, Yang Li, Liang Liu, Cheng Huang
 
-def load_tokenized_urls(filename: str):
+def load_tokenized_urls(filename: str) -> URLTokens:
 
-    print('Pickle Load:\n')
     with open(filename, "rb") as f:
         while True:
             try:
@@ -89,14 +88,19 @@ def test_model(model, test_data, test_labels):
 
 def main():
     
-    for tokenized_url in load_tokenized_urls(''):
-        for token in tokenized_url:
-            pass
-        train_data = []
-        train_labels = []
+    # loop for all bening DMOZ urls
+    for tokenized_url in load_tokenized_urls('data/dmoz_dir.txt_0--1.dat'):
+        for token in tokenized_url.token_list:
+            value = token.value
+            tok_type = token.type
+            print(f'{value}, {tok_type}')
 
-        test_data = []
-        test_labels = []
+    # loop for first 500 malicious urls
+    for tokenized_url in load_tokenized_urls('data/dec_xss_urls.txt_0-500.dat'):
+        for token in tokenized_url.token_list:
+            value = token.value
+            tok_type = token.type
+            print(f'{value}, {tok_type}')
 
     
 
