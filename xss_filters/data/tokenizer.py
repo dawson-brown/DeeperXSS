@@ -67,23 +67,33 @@ def tokenize(url: str) -> List[JSToken]:
     for token_type in tokens:
         for matched in tokens[token_type].finditer(url):
             if token_type == 'start_label':
-                token_list.append( ( JSToken(token_type, matched.group(0)[:-1] + '>', matched.start(), matched.end()) ) )
+                tokens_to_append = [JSToken(token_type, (matched.group(0)[:-1] + '>').lower(), matched.start(), matched.end()) ]
+                # token_list.append( ( JSToken(token_type, matched.group(0)[:-1] + '>', matched.start(), matched.end()) ) )
             elif token_type == 'identifier':
                 if matched.end() < len(url) and url[matched.end()]  == '(':
-                    token_list.append( ( JSToken('function_name', matched.group(0), matched.start(), matched.end()) ) )
+                    tokens_to_append = [JSToken('function_name', matched.group(0).lower(), matched.start(), matched.end()) ]
+                    # token_list.append( ( JSToken('function_name', matched.group(0), matched.start(), matched.end()) ) )
                     arg_end = url.find(')', matched.end())
                     if arg_end != -1:
                         args = url[matched.end()+1:arg_end].strip()
                         if args.isdigit():
-                            token_list.append( JSToken('int_arg', '(1)', matched.end(), arg_end+1) )
+                            tokens_to_append.append(JSToken('int_arg', '(1)', matched.end(), arg_end+1))
+                            # token_list.append( JSToken('int_arg', '(1)', matched.end(), arg_end+1) )
                         else:
-                            token_list.append( JSToken('str_arg', '("str_arg")', matched.end(), arg_end+1) )
+                            tokens_to_append.append(JSToken('str_arg', '("str_arg")', matched.end(), arg_end+1))
+                            # token_list.append( JSToken('str_arg', '("str_arg")', matched.end(), arg_end+1) )
                 else:
-                    token_list.append( ( JSToken(token_type, matched.group(0), matched.start(), matched.end()) ) )
+                    tokens_to_append = [JSToken(token_type, matched.group(0).lower(), matched.start(), matched.end())]
+                    # token_list.append( ( JSToken(token_type, matched.group(0), matched.start(), matched.end()) ) )
             elif token_type == 'int_constant':
-                token_list.append( ( JSToken(token_type, '1', matched.start(), matched.end()) ) )
+                tokens_to_append = [JSToken(token_type, '1', matched.start(), matched.end())]
+                # token_list.append( ( JSToken(token_type, '1', matched.start(), matched.end()) ) )
             else:
-                token_list.append( ( JSToken(token_type, matched.group(0), matched.start(), matched.end()) ) )
+                tokens_to_append = [JSToken(token_type, matched.group(0).lower(), matched.start(), matched.end())]
+                # token_list.append( ( JSToken(token_type, matched.group(0), matched.start(), matched.end()) ) )
+
+            for token in tokens_to_append:
+                token_list.append(token)
 
     sorted_tokens = prune_tokens(token_list)
     return sorted_tokens
