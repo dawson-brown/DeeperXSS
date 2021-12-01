@@ -73,9 +73,15 @@ def tokenize(url: str) -> List[JSToken]:
                     token_list.append( ( JSToken('function_name', matched.group(0), matched.start(), matched.end()) ) )
                     arg_end = url.find(')', matched.end())
                     if arg_end != -1:
-                        token_list.append( JSToken('args', url[matched.end():arg_end+1], matched.end(), arg_end+1) )
+                        args = url[matched.end()+1:arg_end].strip()
+                        if args.isdigit():
+                            token_list.append( JSToken('int_arg', '(1)', matched.end(), arg_end+1) )
+                        else:
+                            token_list.append( JSToken('str_arg', '("str_arg")', matched.end(), arg_end+1) )
                 else:
                     token_list.append( ( JSToken(token_type, matched.group(0), matched.start(), matched.end()) ) )
+            elif token_type == 'int_constant':
+                token_list.append( ( JSToken(token_type, '1', matched.start(), matched.end()) ) )
             else:
                 token_list.append( ( JSToken(token_type, matched.group(0), matched.start(), matched.end()) ) )
 
@@ -103,8 +109,8 @@ def tokenize_to_file(in_name: str, start_line = 0, end_line = -1):
             if i%100 == 0:
                 print(f'\tLine: {i}')
             tmp = URLTokens(url, tokenize(url))
-            # print_token_list(tmp)
-            dump(tmp, outfile)
+            print_token_list(tmp)
+            # dump(tmp, outfile)
 
 if __name__ == "__main__":
 
@@ -127,7 +133,7 @@ if __name__ == "__main__":
             end_i = argv[2]
 
     print(f'XSSed...{start_i} - {end_i}')
-    tokenize_to_file('dmoz_dir.txt', int(start_i), int(end_i))
+    tokenize_to_file('dec_xss_urls.txt', int(start_i), int(end_i))
 
     # url = 'http://website/Hotel-Search?action=hotelSearchWizard@searchHotelOnly&hotelSearchWizard_inpItid=&hotelSearchWizard_inpItty=&hotelSearchWizard_inpItdx=&hotelSearchWizard_inpSearchMethod=usertyped&hotelSearchWizard_inpSearchKeywordIndex=&hotelSearchWizard_inpSearchKeyword=&hotelSearchWizard_inpSearchRegionId=&hotelSearchWizard_inpSearchLatitude=&hotelSearchWizard_inpSearchLongitude=&hotelSearchWizard_inpSearchNear=/"><script>alert(\'Xss ByAtm0n3r\')</script>&hotelSearchWizard_inpSearchNearType=CITY&hotelSearchWizard_inpSearchNearStreetAddr=&hotelSearchWizard_inpSearchNearCity=&hotelSearchWizard_inpSearchNearState=&hotelSearchWizard_inpSearchNearZipCode=&hotelSearchWizard_inpCheckIn=jj/mm/aa&hotelSearchWizard_inpCheckOut=jj/mm/aa&hotelSearchWizard_inpNumRooms=1&hotelSearchWizard_inpNumAdultsInRoom=1&hotelSearchWizard_inpNumChildrenInRoom=0&hotelSearchWizard_inpAddOptionFlag=&hotelSearchWizard_inpHotelName=&hotelSearchWizard_inpHotelClass=0&searchWizard_wizardType=hotelOnly'
     # tmp = URLTokens(url, tokenize(url))
