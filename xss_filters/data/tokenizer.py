@@ -6,6 +6,8 @@ from random import choice
 from random import randrange
 from pickle import dump
 from sys import argv
+import time
+
 
 
 # 'num_arg' : re.compile('[0-9]+\.?[0-9]*\)'),
@@ -67,6 +69,12 @@ def tokenize(url_full: str) -> List[JSToken]:
 
     url = trim_url(url_full)       
     token_list = list()
+
+    num_paths = 0
+    num_assign = 0
+    num_vals = 0
+    num_idens = 0
+
     for token_type in tokens:
         for matched in tokens[token_type].finditer(url):
             if token_type == 'start_label':
@@ -82,15 +90,21 @@ def tokenize(url_full: str) -> List[JSToken]:
                         else:
                             tokens_to_append.append(JSToken('str_arg', '("str_arg")', matched.end(), arg_end+1))
                 elif matched.end() < len(url) and url[matched.end()]  == '=':
-                    tokens_to_append = [JSToken('assignment', matched.group(0).lower() + '=', matched.start(), matched.end())]
+                    tokens_to_append = [JSToken('assignment', f'assign{num_assign}' + '=', matched.start(), matched.end())]
+                    num_assign+=1
+                elif url[matched.start()-1]  == '=':
+                    tokens_to_append = [JSToken('value', f'val{num_vals}', matched.start(), matched.end())]
+                    num_vals+=1
                 elif matched.end() < len(url) and url[matched.end()]  == ':' and matched.group(0).lower().endswith('script'):
                     tokens_to_append = [JSToken('script_url', matched.group(0).lower(), matched.start(), matched.end())]
                 elif matched.end() < len(url) and (url[matched.end()]  == '/' or url[matched.end()]  == '?'):
-                    tokens_to_append = [JSToken('path', matched.group(0).lower() + '/', matched.start(), matched.end())]
-                elif matched.end() == len(url):
+                    tokens_to_append = [JSToken('path', f'path{num_paths}' + '/', matched.start(), matched.end())]
+                    num_paths+=1
+                elif matched.end() == len(url) and url[matched.start() - 1] == '/':
                     tokens_to_append = [JSToken('path', matched.group(0).lower(), matched.start(), matched.end())]
                 else:
-                    continue
+                    tokens_to_append = [JSToken('identifier', f'identifier{num_idens}', matched.start(), matched.end())]
+                    num_idens+=1
             elif token_type == 'int_constant':
                 tokens_to_append = [JSToken(token_type, '1', matched.start(), matched.end())]
             else:
@@ -126,7 +140,8 @@ def tokenize_to_std(in_name: str, num = 0):
 
 def tokenize_to_file(in_name: str, start_line = 0, end_line = -1):
 
-    out_name = f'{in_name}_{start_line}-{end_line}.dat'
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    out_name = f'{in_name}__{timestr}_{start_line}-{end_line}.dat'
 
     with open(in_name, 'r') as infile, \
         open(out_name, 'ab') as outfile:
@@ -164,7 +179,7 @@ if __name__ == "__main__":
             end_i = argv[2]
 
     tokenize_to_file('dmoz_dir.txt', int(start_i), int(end_i))
-    # tokenize_to_file('dec_xss_urls.txt', 0)
+    tokenize_to_file('dec_xss_urls.txt', int(start_i), int(end_i))
 
     # tokenize_to_std('dec_xss_urls.txt', int(start_i))
     # tokenize_to_std('dmoz_dir.txt', int(start_i))
