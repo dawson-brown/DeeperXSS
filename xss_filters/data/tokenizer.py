@@ -178,11 +178,11 @@ if __name__ == "__main__":
         if len(argv) > 2:
             end_i = argv[2]
 
-    tokenize_to_file('dmoz_dir.txt', int(start_i), int(end_i))
-    tokenize_to_file('dec_xss_urls.txt', int(start_i), int(end_i))
+    # tokenize_to_file('dmoz_dir.txt', int(start_i), int(end_i))
+    # tokenize_to_file('dec_xss_urls.txt', int(start_i), int(end_i))
 
-    # tokenize_to_std('dec_xss_urls.txt', int(start_i))
-    # tokenize_to_std('dmoz_dir.txt', int(start_i))
+    tokenize_to_std('dec_xss_urls.txt', int(start_i))
+    tokenize_to_std('dmoz_dir.txt', int(start_i))
 
     # tokenize_to_std('dec_xss_urls.txt', 10)
     # tokenize_to_std('dmoz_dir.txt', 10)
