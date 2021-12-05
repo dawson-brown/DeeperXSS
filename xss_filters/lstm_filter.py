@@ -24,6 +24,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 import dataclasses as dc
+from sklearn.model_selection import KFold
 
 ## for tokens
 import pickle as pk
@@ -158,43 +159,64 @@ def main():
     token_contents = "value"
     features, labels = get_data(token_contents)
 
+    kf = KFold(n_splits=10)
+    kf.get_n_splits(features)
 
-    tenfold_features = [[],[],[],[],[],[],[],[],[],[]]
-    tenfold_labels = [[],[],[],[],[],[],[],[],[],[]]
-    for i, example in enumerate(features):
-        j = i%10
-        tenfold_features[j].append(features[i])
-        tenfold_labels[j].append(labels[i])
-
-    ## create and compile model
     model = create_model()
     model.compile(optimizer='adam',
             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             metrics=['accuracy'])
 
+    for train_indices, test_indices in kf.split(features):
+        
+        loss=0
+        for index in train_indices:
+            loss += model.train_on_batch(features[index], labels[index])
 
-    for i, features in enumerate(tenfold_features):
-        ## each subset will be used as the validation set exactly once, and part of the training set all other times
-        validation_features = tenfold_features.pop(i)
-        validation_labels = tenfold_labels.pop(i)
+        print(f'TRAIN: {train_indices}, TEST: {test_indices}')
+
+        # for index in test_indices:
+            # test_loss, test_acc = model.evaluate(validation_features,  validation_labels, verbose=2)
+            # print("Test loss is: ", test_loss)
+            # print("Test accuracy is: ", test_acc)
 
 
-        loss = 0
-        for j, batch in enumerate(tenfold_features):
+    # tenfold_features = [[],[],[],[],[],[],[],[],[],[]]
+    # tenfold_labels = [[],[],[],[],[],[],[],[],[],[]]
+    # for i, feature in enumerate(features):
+    #     j = i%10
+    #     tenfold_features[j].append(feature)
+    #     tenfold_labels[j].append(labels[i])
 
-            for k, url in enumerate(tenfold_features[j]):
-                loss += model.train_on_batch(url, tenfold_labels[j][k])
-            print('Trained on {} of 9 datasets'.format(j))
+    # ## create and compile model
+    # model = create_model()
+    # model.compile(optimizer='adam',
+    #         loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+    #         metrics=['accuracy'])
 
-        ## test model
-        test_loss, test_acc = model.evaluate(validation_features,  validation_labels, verbose=2)
 
-        print("Test loss is: ", test_loss)
-        print("Test accuracy is: ", test_acc)
+    # for i, features in enumerate(tenfold_features):
+    #     ## each subset will be used as the validation set exactly once, and part of the training set all other times
+    #     validation_features = tenfold_features.pop(i)
+    #     validation_labels = tenfold_labels.pop(i)
 
-        ## insert back into array
-        tenfold_features.insert(i, validation_features)
-        tenfold_labels.insert(i, validation_labels)
+
+    #     loss = 0
+    #     for j, batch in enumerate(tenfold_features):
+
+    #         for k, url in enumerate(batch):
+    #             loss += model.train_on_batch(url, tenfold_labels[j][k])
+    #         print('Trained on {} of 9 datasets'.format(j))
+
+    #     ## test model
+    #     test_loss, test_acc = model.evaluate(validation_features,  validation_labels, verbose=2)
+
+    #     print("Test loss is: ", test_loss)
+    #     print("Test accuracy is: ", test_acc)
+
+    #     ## insert back into array
+    #     tenfold_features.insert(i, validation_features)
+    #     tenfold_labels.insert(i, validation_labels)
 
         ##  save model
         model.save("lstm_{}".format(token_contents))
