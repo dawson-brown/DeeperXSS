@@ -159,7 +159,7 @@ def main():
     token_contents = "value"
     features, labels = get_data(token_contents)
 
-    kf = KFold(n_splits=10)
+    kf = KFold(n_splits=3)
     kf.get_n_splits(features)
 
     model = create_model()
@@ -169,16 +169,33 @@ def main():
 
     for train_indices, test_indices in kf.split(features):
         
-        loss=0
-        for index in train_indices:
-            loss += model.train_on_batch(features[index], labels[index])
-
         print(f'TRAIN: {train_indices}, TEST: {test_indices}')
 
-        # for index in test_indices:
+        loss=0
+        training_set = list()
+        training_targets = list()
+        testing_set = list()
+        testing_targets = list()
+
+
+        for index in train_indices:
+            training_set.append(features[index])
+            training_targets.append(labels[index])
+            # loss += model.train_on_batch(features[index], labels[index])
+
+        for index in test_indices:
+            testing_set.append(features[index])
+            testing_targets.append(labels[index])
             # test_loss, test_acc = model.evaluate(validation_features,  validation_labels, verbose=2)
             # print("Test loss is: ", test_loss)
             # print("Test accuracy is: ", test_acc)
+        
+        #see: https://www.tensorflow.org/api_docs/python/tf/keras/Sequential#fit
+        history = model.fit(x=training_set,
+            y=training_targets,
+            epochs=3,
+            validation_data=testing_set,
+        )
 
 
     # tenfold_features = [[],[],[],[],[],[],[],[],[],[]]
