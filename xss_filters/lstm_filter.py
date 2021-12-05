@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-## for CBOW
+## for deep learning and cbow
 import keras
 from keras.preprocessing import text
 from keras.utils import np_utils
@@ -9,6 +9,8 @@ from keras.preprocessing import sequence
 import keras.backend as K
 from keras.models import Sequential
 from keras.layers import Dense, Embedding, Lambda
+
+from sklearn.model_selection import KFold
 
 
 # visualize CBOW model structure
@@ -53,16 +55,16 @@ def get_data(token_contents):
         tokenized_urls.append(tokenized_url) ## 0 for benign
         labels.append(0)
 
-        # if i > 500: ##for testing purposes
-        #     break
+        if i > 500: ##for testing purposes
+            break
 
     #load malicious urls
     for i, tokenized_url in enumerate(load_tokenized_urls('data\dec_xss_urls.txt__20211203-134417_0--1.dat')):
         tokenized_urls.append(tokenized_url) ## 1 for malicious
         labels.append(1)
 
-        # if i > 500: ##for testing purposes
-        #     break    
+        if i > 500: ##for testing purposes
+            break    
 
     vector_urls = []
     for tokenized_url in tokenized_urls:
@@ -77,9 +79,6 @@ def get_data(token_contents):
                 weights[token_no-1] ## -1 because weights has no 0 index
             )
         vector_urls.append(vector_url)
-
-    print("URLS ", len(vector_urls))
-    print("LABELS ", len(labels))
 
     data_labels_zip = list(zip(vector_urls, labels)) ## zip to keep data and labels aligned during shuffle
 
@@ -125,8 +124,8 @@ def create_model():
 
     model = tf.keras.Sequential([
 
-        ## input layer
-        tf.keras.layers.Flatten(input_shape=(28, 28)), ## based on the input
+        # ## input layer
+        # tf.keras.layers.Flatten(input_shape=(28, 28)), ## based on the input
 
         ## LSTM layer
         tf.keras.layers.LSTM(4), ## units are the dimensionality of the output space
@@ -139,14 +138,6 @@ def create_model():
     ])
     
 
-    return model
-
-## model compilation (may need to alter this)
-
-def compile_model(model):
-    model.compile(optimizer='adam',
-                loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-                metrics=['accuracy'])
     return model
 
 def train_model(model, train_data, train_labels):
@@ -164,7 +155,51 @@ def test_model(model, test_data, test_labels):
 
 
 def main():
-    get_data(token_contents="value")
+    token_contents = "value"
+    features, labels = get_data(token_contents)
+
+
+    tenfold_features = [[],[],[],[],[],[],[],[],[],[]]
+    tenfold_labels = [[],[],[],[],[],[],[],[],[],[]]
+    for i, example in enumerate(features):
+        j = i%10
+        tenfold_features[j].append(features[i])
+        tenfold_labels[j].append(labels[i])
+
+    ## create and compile model
+    model = create_model()
+    model.compile(optimizer='adam',
+            loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+            metrics=['accuracy'])
+
+
+    for i, features in enumerate(tenfold_features):
+        ## each subset will be used as the validation set exactly once, and part of the training set all other times
+        validation_features = tenfold_features.pop(i)
+        validation_labels = tenfold_labels.pop(i)
+
+
+        loss = 0
+        for j, batch in enumerate(tenfold_features):
+
+            for k, url in enumerate(tenfold_features[j]):
+                loss += model.train_on_batch(url, tenfold_labels[j][k])
+            print('Trained on {} of 9 datasets'.format(j))
+
+        ## test model
+        test_loss, test_acc = model.evaluate(validation_features,  validation_labels, verbose=2)
+
+        print("Test loss is: ", test_loss)
+        print("Test accuracy is: ", test_acc)
+
+        ## insert back into array
+        tenfold_features.insert(i, validation_features)
+        tenfold_labels.insert(i, validation_labels)
+
+        ##  save model
+        model.save("lstm_{}".format(token_contents))
+
+        print("Finished epoch {}".format(i))
 
 if __name__ == '__main__':
     main()
