@@ -21,13 +21,6 @@ class DeepURL:
             self._de_url_unicode_decode
         ]
     
-    
-    # def _de_us_ascii_decode(self, query_string : str) -> Tuple[bool, str]:
-    #     return (False, query_string)
-
-
-    # def _de_utf7_decode(self, query_string : str) -> Tuple[bool, str]:
-    #     return (False, query_string)
     def _de_url_unicode_decode(self, query_string : str) -> Tuple[bool, str]:
         try:
             try_dec = query_string.replace('%', '\\').encode('latin-1').decode('unicode-escape')
@@ -51,20 +44,12 @@ class DeepURL:
         return (True, dec_str)
 
 
-    # def _de_dword_decode(self, query_string : str) -> Tuple[bool, str]:
-    #     return (False, query_string)
-
-
     def _de_hex_decode(self, query_string : str) -> Tuple[bool, str]:
         try:
             dec_str = bytes.fromhex(query_string).decode("utf-8")
             return (True, dec_str)
         except:
             return (False, query_string)
-
-
-    # def _de_octal_decode(self, query_string : str) -> Tuple[bool, str]:
-    #     return (False, query_string)
 
 
     def _de_base64_decode(self, query_string : str) -> Tuple[bool, str]:
@@ -96,7 +81,6 @@ class DeepURL:
                 if next_past:
                     return (True, next_dec_str)
 
-        # any(c not in string.printable for c in query_string) or 
         if some_decoded:
             return (False, query_string)
         else:

@@ -21,7 +21,7 @@ def xss_filter(filename: str):
     print(f'Precision: {total_filtered / total}\n')
 
 
-def script_search(filename: str):
+def tag_search(filename: str):
     total_filtered = 0
     total_not_filtered = 0
     total = 0
@@ -29,16 +29,16 @@ def script_search(filename: str):
     with open(filename, 'r') as not_dec_xss:
         lines = not_dec_xss.read().splitlines()
         total = len(lines)
-        open_script = re.compile('<[^>\s/]+(>|\s|/)', re.IGNORECASE)
-        close_script = re.compile('</[^>/]+>', re.IGNORECASE)
+        open_script = re.compile('<[^>]*>', re.IGNORECASE)
+        close_script = re.compile('</[^>]*>', re.IGNORECASE)
 
         for url in lines:
             # t = open_script.findall(url)
             # v = close_script.findall(url)
-            if len(close_script.findall(url)) > 0 or len(close_script.findall(url)) > 0:
+            if len(open_script.findall(url)) > 0 or len(close_script.findall(url)) > 0:
                 total_filtered+=1
             else:
-                print(f'{url}')
+                # print(f'{url}')
                 total_not_filtered+=1
 
     print(f'total: {total}, total filtered: {total_filtered}, total not filtered: {total_not_filtered}')
@@ -58,14 +58,14 @@ def main():
     # xss_filter('data/dmoz_dir.txt')
 
 
-    # print('\nscript_search - Not decoded malicious:')
-    # script_search('data/xss_urls.txt')
+    print('\ntag_search - Not decoded malicious:')
+    tag_search('data/xss_urls.txt')
 
-    print('\nxss_filter - Decoded malicious:')
-    script_search('data/dec_xss_urls.txt')
+    print('\ntag_search - Decoded malicious:')
+    tag_search('data/dec_xss_urls.txt')
 
-    print('\nxss_filter - Benign:')
-    script_search('data/dmoz_dir.txt')
+    print('\ntag_search - Benign:')
+    tag_search('data/dmoz_dir.txt')
 
 
     

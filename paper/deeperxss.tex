@@ -1,0 +1,128 @@
+\subsection{Data Preprocessing}
+\subsubsection{Decoding}
+We built a custom recursive URL decoder. This decoder performs a depth first search of 5 different decodings. At each level, the decoder tries to decode the URL with all decodings, for each decoding that is successfull, the decoder will recursively try to further decode the string that resulted from the decoding; see algorithm \ref{decoder} for a pseudocode implementation. The first string enoucountered that none of the decoders can decode is returned as the decoded string. The supported encodings are: URL unicode encoding (this includes characters of the form \%uxxxx and \textbackslash uxxxx),URL encoding (that is characters of the form \%xx), HTML character references (that is characters of the form \&xx;), hex encoding, and base64 encoding. 
+
+The major steps of the algorithm are as follows: on line \ref{dec:all} all the decoder functions are called and passed the URL to be decoded. These functions all return a Tuple of the form (Boolean, String) where the Boolean value indicates if the decoding was successfull while the String is the decoded string (the String remains unchanged if the decoding fails). Next, on line \ref{dec:res}, the result tuples of all the attempted decoders are looped over. If it's found that a decoder was successful (line \ref{dec:check}) then recurisvely call the decoder on the resulting string (line \ref{dec:rec}). If the recursive decoding succeeds than return the result of the recursive call (\ref{dec:rec:true}). If the decoder gets to line \ref{dec:nrec}, than that means one of two things happened: either none of the decoders succeeded, in which case the string must be fully decoded and so we go to line \ref{dec:true}; if on the other hand some of the decoders succeeded, then if the algorithm gets to line \ref{dec:nrec} it must have been the case that none of the recursive calls succeeded (meaning line \ref{dec:rec:true} was never reached) which means the decoder was unable to decode the string, and line \ref{dec:false} is run. 
+
+\begin{algorithm}
+\caption{Recursive Decoder}\
+\label{decoder}
+\begin{algorithmic}[1]
+    \Function{decode}{url}
+        \State decoders $\gets$ [url(), unicode(), html(), hex(), base64()]
+        \State dec\_results $\gets$ []
+        \For{decoder \textbf{in} decoders} \label{dec:all}
+            \State dec\_results\.append(decoder(url))
+        \EndFor
+
+        \State some\_decoded $\gets False$
+        \For{decode\_success, decode\_str \textbf{in} dec\_results} \label{dec:res}
+            \State some\_decoded $\gets$ decode\_success \textbf{or} some\_decoded
+            \If{decode\_success} \label{dec:check}
+                \State (next\_decode\_success, next\_decode\_str) = DECODE(decode\_str) \label{dec:rec}
+                \If{next\_decode\_success}
+                    \State \Return ($True$, next\_decode\_str) \label{dec:rec:true}
+                \EndIf
+            \EndIf 
+        \EndFor
+
+        \If{some\_decoded} \label{dec:nrec}
+            \State \Return ($False$, url) \label{dec:false}
+        \Else 
+            \State \Return ($True$, url) \label{dec:true}
+        \EndIf
+
+    \EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+To clarify now what the decoder will actually do with a URL, consider the URL:
+
+\url{http://example.com/706174682F746F2F66696C653F783D26616D703B6C743B73637269707426616D703B67743B253230616C65727428253230312532302925323026616D703B6C743B2F73637269707426616D703B67743B}. 
+
+Passing this through the decoder, the Hex decoder will succeed and produce the string: 
+
+\url{http://example.com/path/to/file?x=\&amp;lt;script\&amp;gt;\%20alert(\%201\%20)\%20\&amp;lt;/script\&amp;gt;} 
+
+the the URL decoder will succeed giving the string: 
+
+\url{http://example.com/path/to/file?x=\&amp;lt;script\&amp;gt; alert( 1 ) \&amp;lt;/script\&amp;gt;}
+
+then the HTML decoder will succeed and give:
+
+\url{http://example.com/path/to/file?x=\&lt;script\&gt; alert( 1 ) \&lt;/script\&gt;} 
+
+and finally the HTML decoder will succeed again and give: 
+
+\url{http://example.com/path/to/file?x=<script> alert( 1 ) </script>}. 
+
+At this point, no decoders will succeed and so the decoded string will be returned on line \ref{dec:true}.
+
+
+\subsubsection{Tokenization}
+In DeepXSS they defined and looked for six different kinds of token summarized in table \ref{tok:tab}.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{||c | c||} 
+    \hline
+    Classification & List \\ [0.5ex] 
+    \hline\hline
+    \textbf{Start Label} &  $<$script$>$, $<$body$>$, $<$img , etc... \\ 
+    \hline
+    \textbf{End Label} & $</$script$>$, $</$body$>$, etc... \\
+    \hline
+    \textbf{Windows Event} & onerror=, onload=, onblur=, oncut=, etc... \\
+    \hline
+    \textbf{Function Name} & alert(, String.fromCharCode(, etc... \\
+    \hline
+    \textbf{Script URL} & javascript:, vbscript:, etc... \\ 
+    \hline
+    \textbf{Other} & $>$, ), \#, etc... \\ [1ex] 
+    \hline
+\end{tabular}
+\caption{\label{tok:tab}DeepXSS Tokens.}
+\end{center}
+\end{table}
+
+We expanded on this set of tokens and ended up with a total of 14 token types. The reason we expanded on this token set is because many many URLs especially benign URLs) contained zero tokens. For example \url{http://www.wittebeer.be/?oid=911\&pid=8056} or \url{http://www.facebook.com/Euphnet?sk=wall}, both of which are in the DMOZ directory, do not contain any of their token types. As such, we expanded their table to include 8 more as shown in table \ref{exp:tok:tab}.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{||c | c||} 
+    \hline
+    Classification & List \\ [0.5ex] 
+    \hline\hline
+    \textbf{Integer Argument} &  (543), (1), (2004), etc... \\ 
+    \hline
+    \textbf{Integer Constant} &  1, 2, 5432, 54 , etc... \\ 
+    \hline
+    \textbf{String Argument} & (``Hello''), (String.fromCharCode(65)), etc... \\
+    \hline
+    \textbf{Assignment LHS} & x=, variable=, etc... \\
+    \hline
+    \textbf{Assignment RHS} & =x, =654, =value, etc... \\
+    \hline
+    \textbf{Path} & path/ t56543-trer-yt43/, etc... \\ 
+    \hline
+    \textbf{Identifier} & iden, value, hello, goodbye, etc... \\ [1ex] 
+    \hline
+\end{tabular}
+\caption{\label{exp:tok:tab}Expanded DeepXSS Tokens.}
+\end{center}
+\end{table}
+
+\subsubsection{Generalization}
+In keeping with DeepXSS \cite{fang2018deepxss}, we generalized many parts of the URL. 
+
+
+
+\subsection{Word2Vec}
+
+
+
+\subsection{LSTM Classifier}
+
+
+
+\subsection{Evaluation}

@@ -138,7 +138,7 @@ def create_model(cbow_weights, features):
         ),
 
         ## LSTM layer
-        tf.keras.layers.LSTM(4), ## units are the dimensionality of the output space
+        tf.keras.layers.LSTM(2), ## units are the dimensionality of the output space
 
         ## Dropout Layer
         tf.keras.layers.Dropout(.2, input_shape=(4,)), ## fraction of input units to drop, and input shape
@@ -200,8 +200,7 @@ def main():
     cbow = keras.models.load_model('cbow_model_token_value')
     weights = cbow.get_weights()[0]
 
-    kf = KFold(n_splits=3)
-    kf.get_n_splits(features)
+    kf = KFold(n_splits=3, shuffle=True)
 
     for train_indices, test_indices in kf.split(features):
         
@@ -215,12 +214,13 @@ def main():
         testing_set, testing_targets = build_data_sets(features, labels, test_indices)
         
         # see: https://www.tensorflow.org/api_docs/python/tf/keras/Sequential#fit
-        _history = model.fit(x=np.array(training_set),
-            y=np.array(training_targets),
-            epochs=10
+        _history = model.fit(x=training_set,
+            y=training_targets,
+            epochs=10,
+            batch_size=10
         )
 
-        x = model.predict(np.array(testing_set))
+        x = model.predict(testing_set)
         print(f'Precision: {prediction_precision(x, testing_targets)}')
 
 if __name__ == '__main__':
