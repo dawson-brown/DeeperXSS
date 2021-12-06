@@ -4,7 +4,7 @@ from typing import Any, List, Tuple
 import re
 from random import choice
 from random import randrange
-from pickle import dump
+from pickle import dump, load
 from sys import argv
 import time
 
@@ -117,6 +117,23 @@ def tokenize(url_full: str) -> List[JSToken]:
     return sorted_tokens
 
 
+def load_tokenized_urls(filename: str) -> URLTokens:
+
+    with open(filename, "rb") as f:
+        while True:
+            try:
+                yield load(f)
+            except EOFError:
+                break
+
+
+def longest_url(filename: str) -> int:
+    longest = 0
+    for tokenized_url in load_tokenized_urls(filename):
+        if len(tokenized_url.token_list) > longest:
+            longest = len(tokenized_url.token_list)
+    return longest  
+
 def print_token_list(url_tok: URLTokens):
     print(url_tok.parsed_url)
     for token in url_tok.token_list:
@@ -181,11 +198,14 @@ if __name__ == "__main__":
     # tokenize_to_file('dmoz_dir.txt', int(start_i), int(end_i))
     # tokenize_to_file('dec_xss_urls.txt', int(start_i), int(end_i))
 
-    tokenize_to_std('dec_xss_urls.txt', int(start_i))
-    tokenize_to_std('dmoz_dir.txt', int(start_i))
+    # tokenize_to_std('dec_xss_urls.txt', int(start_i))
+    # tokenize_to_std('dmoz_dir.txt', int(start_i))
 
     # tokenize_to_std('dec_xss_urls.txt', 10)
     # tokenize_to_std('dmoz_dir.txt', 10)
+
+    print(f"{longest_url('dec_xss_urls.txt__20211203-134417_0--1.dat')}")
+    print(f"{longest_url('dmoz_dir.txt__20211203-134415_0--1.dat')}")
 
     # url = 'http://website/search.php'
     # tmp = URLTokens(url, tokenize(url))
