@@ -56,18 +56,18 @@ def get_data(token_contents):
     tokenized_urls = []
     for i, tokenized_url in enumerate(load_tokenized_urls('data/dmoz_dir.txt__20211203-134415_0--1.dat')):
         tokenized_urls.append(tokenized_url) ## 0 for benign
-        labels.append(0)
+        labels.append(np.array([1,0]))
 
-        if i > 1000: ##for testing purposes
-            break
+        # if i > 10000: ##for testing purposes
+        #     break
 
     #load malicious urls
     for i, tokenized_url in enumerate(load_tokenized_urls('data/dec_xss_urls.txt__20211203-134417_0--1.dat')):
         tokenized_urls.append(tokenized_url) ## 1 for malicious
-        labels.append(1)
+        labels.append(np.array([0,1]))
 
-        if i > 1000: ##for testing purposes
-            break    
+        # if i > 10000: ##for testing purposes
+        #     break    
 
     vector_urls = []
     for tokenized_url in tokenized_urls:
@@ -87,7 +87,7 @@ def get_data(token_contents):
     
     vector_urls, labels = zip(*data_labels_zip)
            
-    return vector_urls, labels
+    return vector_urls, np.array(labels)
 
 def get_CBOW(token_contents):
     if token_contents == "type":
@@ -138,10 +138,10 @@ def create_model(cbow_weights, features):
         ),
 
         ## LSTM layer
-        tf.keras.layers.LSTM(4), ## units are the dimensionality of the output space
+        tf.keras.layers.LSTM(10), ## units are the dimensionality of the output space
 
         ## Dropout Layer
-        tf.keras.layers.Dropout(.2, input_shape=(4,)), ## fraction of input units to drop, and input shape
+        tf.keras.layers.Dropout(.5, input_shape=(10,)), ## fraction of input units to drop, and input shape
 
         ## Softmax Output Layer
         Dense(2, activation='softmax', name='softmax_output')
@@ -150,18 +150,6 @@ def create_model(cbow_weights, features):
 
     return model
 
-def train_model(model, train_data, train_labels):
-
-    model.fit(train_data, train_labels, epochs=10)
-
-    return model
-
-def test_model(model, test_data, test_labels):
-
-    test_loss, test_acc = model.evaluate(test_data,  test_labels, verbose=2)
-
-    print("Test loss is: ", test_loss)
-    print("Test accuracy is: ", test_acc)
 
 
 def build_data_sets(features, labels, indices) -> Tuple[np.array, np.array]:
@@ -197,31 +185,42 @@ def main():
     features, labels = get_data(token_contents)
     features = sequence.pad_sequences(features, padding='post')
 
+
+    ## reduce learning rate on plateau callback
+
+    reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.05,
+                              patience=5, min_lr=0.001)
+    model_optimizer = tf.keras.optimizers.SGD(learning_rate=0.15, momentum=0.9)
+
+
     cbow = keras.models.load_model('cbow_model_token_value')
     weights = cbow.get_weights()[0]
+    kf = KFold(n_splits=10)
 
-    kf = KFold(n_splits=3)
-    kf.get_n_splits(features)
 
-    for train_indices, test_indices in kf.split(features):
-        
+    for train_indices, test_indices in kf.split(features, labels):
+
         model = create_model(weights, features)
-        model.compile(optimizer='adam',
-                loss='binary_crossentropy',
-                metrics=['accuracy'])
+        model.compile(optimizer=model_optimizer,
+        loss='categorical_crossentropy', ## binary_crossentropy, categorical_crossentropy
+        metrics=['accuracy'])
+
 
         # print(f'TRAIN: {train_indices}, TEST: {test_indices}')
-        training_set, training_targets = build_data_sets(features, labels, train_indices)
-        testing_set, testing_targets = build_data_sets(features, labels, test_indices)
+        # training_set, training_targets = build_data_sets(features, labels, train_indices)
+        # testing_set, testing_targets = build_data_sets(features, labels, test_indices)
         
         # see: https://www.tensorflow.org/api_docs/python/tf/keras/Sequential#fit
-        _history = model.fit(x=np.array(training_set),
-            y=np.array(training_targets),
-            epochs=10
+        _history = model.fit(x=features[train_indices],
+            y=labels[train_indices],
+            epochs=10,
+            verbose=1,
+            batch_size=32,
+            callbacks=[reduce_lr]
         )
 
-        x = model.predict(np.array(testing_set))
-        print(f'Precision: {prediction_precision(x, testing_targets)}')
+        # x = model.predict(np.array(testing_set))
+        # print(f'Precision: {prediction_precision(x, testing_targets)}')
 
 if __name__ == '__main__':
     main()
