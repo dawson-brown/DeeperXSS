@@ -204,10 +204,9 @@ if __name__ == "__main__":
     # tokenize_to_std('dec_xss_urls.txt', 10)
     # tokenize_to_std('dmoz_dir.txt', 10)
 
-    print(f"{longest_url('dec_xss_urls.txt__20211203-134417_0--1.dat')}")
-    print(f"{longest_url('dmoz_dir.txt__20211203-134415_0--1.dat')}")
-
-    # url = 'http://website/search.php'
-    # tmp = URLTokens(url, tokenize(url))
-    # print_token_list(tmp)
+    # print(f"{longest_url('dec_xss_urls.txt__20211203-134417_0--1.dat')}")
+    # print(f"{longest_url('dmoz_dir.txt__20211203-134415_0--1.dat')}")
+    url = 'http://website/search.php?uid=ws848d8024088c327.36898031\&src=\&term=<script>alert(123)</script>\&args=qs=06o'
+    tmp = URLTokens(url, tokenize(url))
+    print_token_list(tmp)
         

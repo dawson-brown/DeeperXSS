@@ -126,7 +126,19 @@ To take for example \url{http://website/search.php?uid=ws848d8024088c327.3689803
 \item \texttt{(Assignment LHS, `assign0=')} for \texttt{uid=}
 \item \texttt{(Assignment RHS, `val0')} for \texttt{=ws848d8024088c327}
 \item \texttt{(Integer Constant, 1)} for \texttt{36898031}
+\item \texttt{(Assignment LHS, `assign1=')} for \texttt{src=}
+\item \texttt{(Assignment LHS, `assign2=')} for \texttt{term=}
+\item \texttt{(Start Label, `<script>')} for \texttt{<script>}
+\item \texttt{(Function Name, `alert')} for \texttt{alert(}
+\item \texttt{(Integer Argument, `(1)')} for \texttt{(123)}
+\item \texttt{(End Label, `</script>')} for \texttt{<script>}
+\item \texttt{(Assignment LHS, `assign3=')} for \texttt{args=}
+\item \texttt{(Assignment LHS, `assign4=')} for \texttt{qs=}
+\item \texttt{(Integer Constant, `06')} for \texttt{06}
+\item \texttt{(Identifier, `o')} for \texttt{o}
 \end{enumerate}
+
+Note that if two different token types overlap, the one that starts earlier is preferred; if they start in the same place then the one that extends further is preferred. This is why `args=qs=' is taken to be two left-hand sides--the `qs' could be a right-hand side, but with the equals on the right its taken to be a left-hand side since that is longer and both start at the `q'. As per the last two tokens, identifiers cannot start with numbers  (in Javascript) and so the 06o is taken to be an integer constant and an identifier.
 
 
 \subsection{Word2Vec}
