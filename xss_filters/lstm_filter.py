@@ -138,10 +138,11 @@ def create_model(cbow_weights, features):
         ),
 
         ## LSTM layer
-        tf.keras.layers.LSTM(10), ## units are the dimensionality of the output space
+
+        tf.keras.layers.LSTM(2), ## units are the dimensionality of the output space
 
         ## Dropout Layer
-        tf.keras.layers.Dropout(.5, input_shape=(10,)), ## fraction of input units to drop, and input shape
+        tf.keras.layers.Dropout(.5, input_shape=(2,)), ## fraction of input units to drop, and input shape
 
         ## Softmax Output Layer
         Dense(2, activation='softmax', name='softmax_output')
@@ -196,7 +197,6 @@ def main():
     cbow = keras.models.load_model('cbow_model_token_value')
     weights = cbow.get_weights()[0]
     kf = KFold(n_splits=10)
-
 
     for train_indices, test_indices in kf.split(features, labels):
 
