@@ -66,7 +66,7 @@ In DeepXSS they defined and looked for six different kinds of token summarized i
 \begin{center}
 \begin{tabular}{||c | c||} 
     \hline
-    Classification & List \\ [0.5ex] 
+    Classification & Example \\ [0.5ex] 
     \hline\hline
     \textbf{Start Label} &  $<$script$>$, $<$body$>$, $<$img , etc... \\ 
     \hline
@@ -91,7 +91,7 @@ We expanded on this set of tokens and ended up with a total of 14 token types. T
 \begin{center}
 \begin{tabular}{||c | c||} 
     \hline
-    Classification & List \\ [0.5ex] 
+    Classification & Example \\ [0.5ex] 
     \hline\hline
     \textbf{Integer Argument} &  (543), (1), (2004), etc... \\ 
     \hline
@@ -112,9 +112,21 @@ We expanded on this set of tokens and ended up with a total of 14 token types. T
 \end{center}
 \end{table}
 
-\subsubsection{Generalization}
-In keeping with DeepXSS \cite{fang2018deepxss}, we generalized many parts of the URL. 
+An integer argument token is any integer value that follows a function name token and is enclosed in brackets. Similarly, a string argument token is taken to be any argument that isn't an integer; hence \textit{String.fromCharCode(65)} being an example of a string argument. We figured that distinguishing futher between tokens would be superfluous, and by inspection these were the most common arguments and even if the argument was a function call, the return value was almost always either an integer or a string. The integer constant token was introduced because many URLs contained non-descript integers outside of function calls and URL arguments. The two assignment tokens (left-hand side and right-hand side) were introduced so that URL arguments would not be lost (notice that the two benign examples include arguments that are skipped by DeepXSS). Similarly, path tokens were intoduced so that the path wasn't entirely skipped. And finally we introduced a generic identifier token. Assignment LHS, Path, Script URL, Function Name, and Windows Events all begin with an identifier but all have additional characters to further distinguish them (for example Windows evens always start with `on' and end with `=', paths end with `/' or `?', etc). Any identifier that is found that cannot be further categorized is included as a generic Identifier token.
 
+\subsubsection{Generalization}
+In keeping with DeepXSS \cite{fang2018deepxss}, we generalized many parts of the URL. In the original paper all the domains became simply \textit{website}. In our case, we simply ommitted the domain since including \textit{website} for every domain communicates no information. We mapped all integer arguments to `(1)' and all string arguments to `(``str\_arg'')'. All integer constants were mapped to 1. The left-hand side of assignments were all generalized to `assign<num>=' where `<num>' starts from 0 and increments for each encountered left-hand side. This was done because most identifiers in URLs proved to be unique, and so not useful in classification (especially when using CBOW) with the exception of Function Names, script URLs, and Windows Events which are reserved words and so can't be unique across many URLs. The right-hand sides also took the form `val<num>' where `<num>' again increments with each right-hand side encountered. Similarly, all path tokens were mapped to `path<num>/' where `<num>' again starts at 0 and increments with each path token that's found. Finally all identifier tokens were mapped to `ident<num>'.
+
+
+\subsubsection{An Example}
+To take for example \url{http://website/search.php?uid=ws848d8024088c327.36898031\&src=\&term=<script>alert(123)</script>\&args=qs=06o} the following sequence of (token type, token value) pairs would be extracted going left to right:
+
+\begin{enumerate}
+\item \texttt{(Path, `path0/')} for \url{search.php?}
+\item \texttt{(Assignment LHS, `assign0=')} for \texttt{uid=}
+\item \texttt{(Assignment RHS, `val0')} for \texttt{=ws848d8024088c327}
+\item \texttt{(Integer Constant, 1)} for \texttt{36898031}
+\end{enumerate}
 
 
 \subsection{Word2Vec}

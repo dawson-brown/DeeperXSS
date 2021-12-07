@@ -33,6 +33,81 @@ from data.tokenizer import URLTokens, JSToken
 # https://www.kdnuggets.com/2018/04/implementing-deep-learning-methods-feature-engineering-text-data-cbow.html
 # https://www.jasonosajima.com/word2vec
 
+
+def load_tokenized_urls(filename: str) -> URLTokens:
+
+    with open(filename, "rb") as f:
+        while True:
+            try:
+                yield load(f)
+            except EOFError:
+                break
+
+def get_data_and_labels(token_contents, vocab):
+
+    labels = []
+
+    #load benign urls
+    tokenized_urls = []
+    for i, tokenized_url in enumerate(load_tokenized_urls('data/dmoz_dir.txt__20211203-134415_0--1.dat')):
+        tokenized_urls.append(tokenized_url) ## 0 for benign
+        # labels.append(np.array([1,0]))
+        labels.append(0)
+
+        if i==2000:
+            break
+
+    #load malicious urls
+    for i, tokenized_url in enumerate(load_tokenized_urls('data/dec_xss_urls.txt__20211203-134417_0--1.dat')):
+        tokenized_urls.append(tokenized_url) ## 1 for malicious
+        # labels.append(np.array([0,1]))
+        labels.append(1)
+
+        if i==2000:
+            break
+
+    vector_urls = []
+    for tokenized_url in tokenized_urls:
+
+        vector_url = []
+
+        for token in tokenized_url.token_list:
+            token_no = vocab[dc.asdict(token)[token_contents]]
+            vector_url.append(token_no) ## -1 because weights has no 0 index
+        
+        vector_urls.append(vector_url)
+
+    data_labels_zip = list(zip(vector_urls, labels)) ## zip to keep data and labels aligned during shuffle
+
+    random.seed(5318008)
+    random.shuffle(data_labels_zip)
+    
+    vector_urls, labels = zip(*data_labels_zip)
+           
+    return vector_urls, np.array(labels)
+
+
+def get_CBOW(token_contents):
+    if token_contents == "type":
+        vocab_name = "vocab_type.pickle"
+        inv_vocab_name = "inv_vocab_type.pickle"
+        model_name = "cbow_model_token_type"
+    else:
+        vocab_name = "vocab_value.pickle"
+        inv_vocab_name = "inv_vocab_value.pickle"
+        model_name = "cbow_model_token_value"
+
+    with open(vocab_name, 'rb') as handle:
+        vocab = pk.load(handle)
+    with open(inv_vocab_name, 'rb') as handle:
+        inverse_vocab = pk.load(handle)
+
+    cbow = keras.models.load_model(model_name)
+    weights = cbow.get_weights()[0]
+
+    return weights, vocab, inverse_vocab
+
+
 def load_tokenized_urls(filename: str) -> URLTokens:
 
     with open(filename, "rb") as f:
