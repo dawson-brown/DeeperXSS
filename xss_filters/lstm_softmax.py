@@ -67,16 +67,16 @@ def get_data(token_contents):
         tokenized_urls.append(tokenized_url) ## 0 for benign
         labels.append(np.array([1,0]))
 
-        if i > 10000: ##for testing purposes
-            break
+        # if i > 10000: ##for testing purposes
+        #     break
 
     #load malicious urls
     for i, tokenized_url in enumerate(load_tokenized_urls('data/dec_xss_urls.txt__20211203-134417_0--1.dat')):
         tokenized_urls.append(tokenized_url) ## 1 for malicious
         labels.append(np.array([0,1]))
 
-        if i > 10000: ##for testing purposes
-            break    
+        # if i > 10000: ##for testing purposes
+        #     break    
 
     vector_urls = []
 
@@ -172,7 +172,7 @@ def main():
     ## future work could try a different optimizer such as: model_optimizer = tf.keras.optimizers.SGD(learning_rate=0.6, momentum=0.9)  ## specific model optimizer using SGD
 
 
-    kf = KFold(n_splits=10, shuffle=True)
+    kf = KFold(n_splits=10) ## shuffle=True
     i=0
 
     for train_indices, test_indices in kf.split(features, labels):
@@ -187,9 +187,9 @@ def main():
         # see: https://www.tensorflow.org/api_docs/python/tf/keras/Sequential#fit
         _history = model.fit(x=features[train_indices],
             y=labels[train_indices],
-            epochs=1,
+            epochs=2,
             verbose=1,
-            batch_size=32,
+            batch_size=16,
         )
 
         x = model.predict(np.array(features[test_indices]))
