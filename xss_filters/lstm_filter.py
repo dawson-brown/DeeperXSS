@@ -12,6 +12,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Embedding, Lambda
 
 from sklearn.model_selection import KFold
+from keras.wrappers.scikit_learn import KerasClassifier
 
 
 # visualize CBOW model structure
@@ -49,7 +50,15 @@ def load_tokenized_urls(filename: str) -> URLTokens:
 
 def get_data(token_contents):
 
-    weights, vocab, inverse_vocab = get_CBOW(token_contents)
+    if token_contents == "type":
+        vocab_name = "vocab_type.pickle"
+    else:
+        vocab_name = "vocab_value.pickle"
+
+    ## open vocab for token type or token value
+    with open(vocab_name, 'rb') as handle:
+        vocab = pk.load(handle)
+
     labels = []
 
     #load benign urls
@@ -70,62 +79,44 @@ def get_data(token_contents):
         #     break    
 
     vector_urls = []
+
+    ## get token identifiers from CBOW dict for each token
     for tokenized_url in tokenized_urls:
 
         vector_url = []
 
         for token in tokenized_url.token_list:
             token_no = vocab[dc.asdict(token)[token_contents]]
-            vector_url.append(token_no) ## -1 because weights has no 0 index
+            vector_url.append(token_no)
         
         vector_urls.append(vector_url)
 
     data_labels_zip = list(zip(vector_urls, labels)) ## zip to keep data and labels aligned during shuffle
 
     random.seed(5318008)
+
     random.shuffle(data_labels_zip)
     
     vector_urls, labels = zip(*data_labels_zip)
            
     return vector_urls, np.array(labels)
 
-def get_CBOW(token_contents):
+def get_CBOW_weights(token_contents):
+
     if token_contents == "type":
-        vocab_name = "vocab_type.pickle"
-        inv_vocab_name = "inv_vocab_type.pickle"
         model_name = "cbow_model_token_type"
     else:
-        vocab_name = "vocab_value.pickle"
-        inv_vocab_name = "inv_vocab_value.pickle"
         model_name = "cbow_model_token_value"
 
-    with open(vocab_name, 'rb') as handle:
-        vocab = pk.load(handle)
-    with open(inv_vocab_name, 'rb') as handle:
-        inverse_vocab = pk.load(handle)
-
     cbow = keras.models.load_model(model_name)
-    weights = cbow.get_weights()[0]
+    weights = cbow.get_weights()[0] ## get CBOW weights for embed layer of model
 
-    weights = weights[1:]
-    print(weights.shape) ## print shape of weights
-
-    print(pd.DataFrame(weights, index=list(inverse_vocab.values())[1:]).head())
-
-    from sklearn.metrics.pairwise import euclidean_distances
-
-    # # compute pairwise distance matrix
-    # distance_matrix = euclidean_distances(weights)
-
-    return weights, vocab, inverse_vocab
+    return weights
 
 
 def create_model(cbow_weights, features):
 
     model = tf.keras.Sequential([
-
-        # ## input layer
-        # tf.keras.layers.Flatten(input_shape=(28, 28)), ## based on the input
 
         # add cbow embeddings
         # see https://blog.keras.io/using-pre-trained-word-embeddings-in-a-keras-model.html
@@ -139,10 +130,10 @@ def create_model(cbow_weights, features):
 
         ## LSTM layer
 
-        tf.keras.layers.LSTM(2), ## units are the dimensionality of the output space
+        tf.keras.layers.LSTM(50), ## units are the dimensionality of the output space...this might be useful to change if training on token.type
 
         ## Dropout Layer
-        tf.keras.layers.Dropout(.5, input_shape=(2,)), ## fraction of input units to drop, and input shape
+        tf.keras.layers.Dropout(.5, input_shape=(50,)), ## fraction of input units to drop, and input shape
 
         ## Softmax Output Layer
         Dense(2, activation='softmax', name='softmax_output')
@@ -150,22 +141,6 @@ def create_model(cbow_weights, features):
     
 
     return model
-
-
-
-def build_data_sets(features, labels, indices) -> Tuple[np.array, np.array]:
-
-    data = list()
-    data_labels = list()
-
-    for index in indices:
-        data.append(features[index])
-        if labels[index] == 0:
-            data_labels.append(np.array([1,0]))
-        else:
-            data_labels.append(np.array([0,1]))
-
-    return np.array(data), np.array(data_labels)
 
 
 def prediction_precision(predictions, actual):
@@ -182,45 +157,43 @@ def prediction_precision(predictions, actual):
 
 def main():
 
-    token_contents = "value"
+    token_contents = "value" ## "type" to train on token.type "value" to train on token.value
+
+
     features, labels = get_data(token_contents)
     features = sequence.pad_sequences(features, padding='post')
+    cbow_weights = get_CBOW_weights(token_contents)
 
 
-    ## reduce learning rate on plateau callback
+    ## for future work we can try a callback in model.fit where we set callbacks=[reduce_lr]
+    # reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.05,
+    #                           patience=5, min_lr=0.001)  ## reduce learning rate on plateau callback
 
-    reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.05,
-                              patience=5, min_lr=0.001)
-    model_optimizer = tf.keras.optimizers.SGD(learning_rate=0.15, momentum=0.9)
+    ## future work could try a different optimizer such as: model_optimizer = tf.keras.optimizers.SGD(learning_rate=0.6, momentum=0.9)  ## specific model optimizer using SGD
 
 
-    cbow = keras.models.load_model('cbow_model_token_value')
-    weights = cbow.get_weights()[0]
-    kf = KFold(n_splits=10)
+    kf = KFold(n_splits=10, shuffle=True)
+    i=0
 
     for train_indices, test_indices in kf.split(features, labels):
-
-        model = create_model(weights, features)
-        model.compile(optimizer=model_optimizer,
-        loss='categorical_crossentropy', ## binary_crossentropy, categorical_crossentropy
+        i+=1
+        print("\n Beginning fold {}:\n".format(i))
+        model = create_model(cbow_weights, features)
+        model.compile(optimizer='Adam',
+        loss='categorical_crossentropy',
         metrics=['accuracy'])
-
-
-        # print(f'TRAIN: {train_indices}, TEST: {test_indices}')
-        # training_set, training_targets = build_data_sets(features, labels, train_indices)
-        # testing_set, testing_targets = build_data_sets(features, labels, test_indices)
         
         # see: https://www.tensorflow.org/api_docs/python/tf/keras/Sequential#fit
         _history = model.fit(x=features[train_indices],
             y=labels[train_indices],
-            epochs=10,
+            epochs=5,
             verbose=1,
             batch_size=32,
-            callbacks=[reduce_lr]
         )
 
-        # x = model.predict(np.array(testing_set))
-        # print(f'Precision: {prediction_precision(x, testing_targets)}')
+        x = model.predict(np.array(features[test_indices]))
+        print(f'Accuracy: {prediction_precision(x, labels[test_indices])}')
+        print("Fold {} complete.".format(i))
 
 if __name__ == '__main__':
     main()
