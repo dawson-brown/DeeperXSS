@@ -2,6 +2,7 @@ from lstm_sigmoid import lstm_model as sigmoid_model
 from lstm_softmax import lstm_model as softmax_model
 from lstm_sequence import lstm_model as sequence_model
 from lstm_random_embed import lstm_model as random_embed_lstm
+from trad_filter import tag_search
 from data.tokenizer import URLTokens, JSToken
 
 
@@ -44,7 +45,6 @@ def main():
     for name, model in models:
         results = model("type")
         print_avg_results_to_file(f'{name}-type', results)
-
 
 if __name__ == '__main__':
     main()
