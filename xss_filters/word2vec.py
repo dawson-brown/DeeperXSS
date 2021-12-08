@@ -1,3 +1,4 @@
+from typing import Any, Tuple
 import tensorflow as tf
 
 ## for CBOW
@@ -43,7 +44,7 @@ def load_tokenized_urls(filename: str) -> URLTokens:
             except EOFError:
                 break
 
-def get_data_and_labels(token_contents, vocab):
+def get_data_and_labels(token_contents, vocab, bin_labels: Tuple[Any, Any]):
 
     labels = []
 
@@ -52,13 +53,13 @@ def get_data_and_labels(token_contents, vocab):
     for i, tokenized_url in enumerate(load_tokenized_urls('data/dmoz_dir.txt__20211203-134415_0--1.dat')):
         tokenized_urls.append(tokenized_url) ## 0 for benign
         # labels.append(np.array([1,0]))
-        labels.append(0)
+        labels.append(bin_labels[0])
 
     #load malicious urls
     for i, tokenized_url in enumerate(load_tokenized_urls('data/dec_xss_urls.txt__20211203-134417_0--1.dat')):
         tokenized_urls.append(tokenized_url) ## 1 for malicious
         # labels.append(np.array([0,1]))
-        labels.append(1)
+        labels.append(bin_labels[1])
 
     vector_urls = []
     for tokenized_url in tokenized_urls:

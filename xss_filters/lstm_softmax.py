@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import List, Tuple
 import tensorflow as tf
 
 ## for deep learning and cbow
@@ -33,86 +33,13 @@ from keras.layers import Embedding
 import pickle as pk
 from pickle import dump, load
 from data.tokenizer import URLTokens, JSToken
+from word2vec import get_CBOW, get_data_and_labels
 from metrics import get_precision, get_recall, get_f1, get_accuracy
 
 ## LSTM based on DeepXSS by Yong Fang, Yang Li, Liang Liu, Cheng Huang
 
-def load_tokenized_urls(filename: str) -> URLTokens:
-
-    with open(filename, "rb") as f:
-        while True:
-            try:
-                yield load(f)
-            except EOFError:
-                break
-
 
 ## Deep Learning Model ------------------------------------------------------------------------------------------------
-
-def get_data(token_contents):
-
-    if token_contents == "type":
-        vocab_name = "vocab_type.pickle"
-    else:
-        vocab_name = "vocab_value.pickle"
-
-    ## open vocab for token type or token value
-    with open(vocab_name, 'rb') as handle:
-        vocab = pk.load(handle)
-
-    labels = []
-
-    #load benign urls
-    tokenized_urls = []
-    for i, tokenized_url in enumerate(load_tokenized_urls('data/dmoz_dir.txt__20211203-134415_0--1.dat')):
-        tokenized_urls.append(tokenized_url) ## 0 for benign
-        labels.append(np.array([1,0]))
-
-        # if i > 10000: ##for testing purposes
-        #     break
-
-    #load malicious urls
-    for i, tokenized_url in enumerate(load_tokenized_urls('data/dec_xss_urls.txt__20211203-134417_0--1.dat')):
-        tokenized_urls.append(tokenized_url) ## 1 for malicious
-        labels.append(np.array([0,1]))
-
-        # if i > 10000: ##for testing purposes
-        #     break    
-
-    vector_urls = []
-
-    ## get token identifiers from CBOW dict for each token
-    for tokenized_url in tokenized_urls:
-
-        vector_url = []
-
-        for token in tokenized_url.token_list:
-            token_no = vocab[dc.asdict(token)[token_contents]]
-            vector_url.append(token_no)
-        
-        vector_urls.append(vector_url)
-
-    data_labels_zip = list(zip(vector_urls, labels)) ## zip to keep data and labels aligned during shuffle
-
-    random.seed(5318008)
-
-    random.shuffle(data_labels_zip)
-    
-    vector_urls, labels = zip(*data_labels_zip)
-           
-    return vector_urls, np.array(labels)
-
-def get_CBOW_weights(token_contents):
-
-    if token_contents == "type":
-        model_name = "cbow_model_token_type"
-    else:
-        model_name = "cbow_model_token_value"
-
-    cbow = keras.models.load_model(model_name)
-    weights = cbow.get_weights()[0] ## get CBOW weights for embed layer of model
-
-    return weights
 
 
 def create_model(cbow_weights, features):
@@ -144,27 +71,16 @@ def create_model(cbow_weights, features):
     return model
 
 
-def prediction_precision(predictions, actual):
+def lstm_model(token_contents: str, cross_val=10, num_elems=-1) -> List[dict]:
 
-    total_correct = 0
-    for p,l in zip(predictions, actual):
-        pred = np.argmax(p)
-        label = np.argmax(l)
-        if pred == label:
-            total_correct+=1
-
-    return total_correct / len(actual)
-
-
-def main():
-
-    token_contents = "value" ## "type" to train on token.type "value" to train on token.value
-
-
-    features, labels = get_data(token_contents)
+    cbow_weights, vocab, _ = get_CBOW(token_contents)
+    features, labels = get_data_and_labels(token_contents, vocab, (np.array([1,0]), np.array([0,1])) )
+    
+    if num_elems > 0:
+        features = features[:num_elems]
+        labels = labels[:num_elems]
+    
     features = sequence.pad_sequences(features, padding='post')
-    cbow_weights = get_CBOW_weights(token_contents)
-
 
     ## for future work we can try a callback in model.fit where we set callbacks=[reduce_lr]
     # reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.05,
@@ -173,8 +89,10 @@ def main():
     ## future work could try a different optimizer such as: model_optimizer = tf.keras.optimizers.SGD(learning_rate=0.6, momentum=0.9)  ## specific model optimizer using SGD
 
 
-    kf = KFold(n_splits=10) ## shuffle=True
+    kf = KFold(n_splits=cross_val) ## shuffle=True
     i=0
+
+    all_results = []
 
     for train_indices, test_indices in kf.split(features, labels):
         i+=1
@@ -195,18 +113,19 @@ def main():
 
         predictions = model.predict(np.array(features[test_indices]))
         predictions = np.argmax(predictions, axis=1)
-
         max_labels = np.argmax(labels[test_indices], axis=1)
 
-        print(predictions)
-        print(max_labels)
+        result_of_fold = {
+            'precision': get_precision(predictions, max_labels),
+            'recall': get_recall(predictions, max_labels),
+            'f1': get_f1(predictions, max_labels),
+            'accuracy': get_accuracy(predictions, max_labels)
+        }
+        all_results.append(result_of_fold)
 
-        precision = get_precision(predictions, max_labels)
-        recall = get_recall(predictions, max_labels)
-        f1 = get_f1(predictions, max_labels)
-        accuracy = get_accuracy(predictions, max_labels)
+    return all_results
 
-        print("Fold {} complete.".format(i))
+
 
 if __name__ == '__main__':
-    main()
+    results = lstm_model()

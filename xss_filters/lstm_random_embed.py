@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import List, Tuple
 import tensorflow as tf
 
 ## for deep learning and cbow
@@ -34,64 +34,13 @@ from keras.layers import Embedding
 import pickle as pk
 from pickle import dump, load
 from data.tokenizer import URLTokens, JSToken 
+from word2vec import get_data_and_labels
+from metrics import get_precision, get_recall, get_f1, get_accuracy
 
 ## LSTM based on DeepXSS by Yong Fang, Yang Li, Liang Liu, Cheng Huang
 
-def load_tokenized_urls(filename: str) -> URLTokens:
-
-    with open(filename, "rb") as f:
-        while True:
-            try:
-                yield load(f)
-            except EOFError:
-                break
-
 
 ## Deep Learning Model ------------------------------------------------------------------------------------------------
-
-def get_data(token_contents, vocab):
-
-    labels = []
-
-    #load benign urls
-    tokenized_urls = []
-    for i, tokenized_url in enumerate(load_tokenized_urls('data/dmoz_dir.txt__20211203-134415_0--1.dat')):
-        tokenized_urls.append(tokenized_url) ## 0 for benign
-        labels.append(np.array([1,0]))
-
-        # if i > 10000: ##for testing purposes
-        #     break
-
-    #load malicious urls
-    for i, tokenized_url in enumerate(load_tokenized_urls('data/dec_xss_urls.txt__20211203-134417_0--1.dat')):
-        tokenized_urls.append(tokenized_url) ## 1 for malicious
-        labels.append(np.array([0,1]))
-
-        # if i > 10000: ##for testing purposes
-        #     break    
-
-    vector_urls = []
-
-    ## get token identifiers from CBOW dict for each token
-    for tokenized_url in tokenized_urls:
-
-        vector_url = []
-
-        for token in tokenized_url.token_list:
-            token_no = vocab[dc.asdict(token)[token_contents]]
-            vector_url.append(token_no)
-        
-        vector_urls.append(vector_url)
-
-    data_labels_zip = list(zip(vector_urls, labels)) ## zip to keep data and labels aligned during shuffle
-
-    random.seed(5318008)
-
-    random.shuffle(data_labels_zip)
-    
-    vector_urls, labels = zip(*data_labels_zip)
-           
-    return vector_urls, np.array(labels)
 
 def create_model(max_url_length, vocab_size):
 
@@ -119,21 +68,8 @@ def create_model(max_url_length, vocab_size):
     return model
 
 
-def prediction_precision(predictions, actual):
 
-    total_correct = 0
-    for p,l in zip(predictions, actual):
-        pred = np.argmax(p)
-        label = np.argmax(l)
-        if pred == label:
-            total_correct+=1
-
-    return total_correct / len(actual)
-
-
-def main():
-
-    token_contents = "value" ## "type" to train on token.type "value" to train on token.value
+def lstm_model(token_contents: str, cross_val=10, num_elems=-1) -> List[dict]:
 
     if token_contents == "type":
         vocab_name = "vocab_type.pickle"
@@ -144,12 +80,16 @@ def main():
     with open(vocab_name, 'rb') as handle:
         vocab = pk.load(handle)
 
+    features, labels = get_data_and_labels(token_contents, vocab, (np.array([1,0]), np.array([0,1])) )
+    
+    if num_elems > 0:
+        features = features[:num_elems]
+        labels = labels[:num_elems]
 
-    features, labels = get_data(token_contents, vocab)
     features = sequence.pad_sequences(features, padding='post')
 
     vocab_size = len(vocab) ## amount of unique tokens in vocab
-    max_url_length = 442 ## maximum url size we pad for
+    max_url_length = len(features[0]) ## maximum url size we pad for
 
 
     ## for future work we can try a callback in model.fit where we set callbacks=[reduce_lr]
@@ -159,8 +99,10 @@ def main():
     ## future work could try a different optimizer such as: model_optimizer = tf.keras.optimizers.SGD(learning_rate=0.6, momentum=0.9)  ## specific model optimizer using SGD
 
 
-    kf = KFold(n_splits=10) ## shuffle=True
+    kf = KFold(n_splits=cross_val) ## shuffle=True
     i=0
+
+    all_results = []
 
     for train_indices, test_indices in kf.split(features, labels):
         i+=1
@@ -174,14 +116,25 @@ def main():
         # see: https://www.tensorflow.org/api_docs/python/tf/keras/Sequential#fit
         _history = model.fit(x=features[train_indices],
             y=labels[train_indices],
-            epochs=10,
+            epochs=2,
             verbose=1,
             batch_size=16,
         )
 
-        x = model.predict(np.array(features[test_indices]))
-        print(f'Accuracy: {prediction_precision(x, labels[test_indices])}')
-        print("Fold {} complete.".format(i))
+        predictions = model.predict(np.array(features[test_indices]))
+        predictions = np.argmax(predictions, axis=1)
+        max_labels = np.argmax(labels[test_indices], axis=1)
+
+        result_of_fold = {
+            'precision': get_precision(predictions, max_labels),
+            'recall': get_recall(predictions, max_labels),
+            'f1': get_f1(predictions, max_labels),
+            'accuracy': get_accuracy(predictions, max_labels)
+        }
+        all_results.append(result_of_fold)
+
+    return all_results
+
 
 if __name__ == '__main__':
-    main()
+    lstm_model()
