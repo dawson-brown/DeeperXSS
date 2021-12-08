@@ -12,7 +12,7 @@ The major steps of the algorithm are as follows: on line \ref{dec:all} all the d
         \State decoders $\gets$ [url(), unicode(), html(), hex(), base64()]
         \State dec\_results $\gets$ []
         \For{decoder \textbf{in} decoders} \label{dec:all}
-            \State dec\_results\.append(decoder(url))
+            \State dec\_results.append(decoder(url))
         \EndFor
 
         \State some\_decoded $\gets False$
