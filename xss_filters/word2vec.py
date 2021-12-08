@@ -54,17 +54,11 @@ def get_data_and_labels(token_contents, vocab):
         # labels.append(np.array([1,0]))
         labels.append(0)
 
-        if i==2000:
-            break
-
     #load malicious urls
     for i, tokenized_url in enumerate(load_tokenized_urls('data/dec_xss_urls.txt__20211203-134417_0--1.dat')):
         tokenized_urls.append(tokenized_url) ## 1 for malicious
         # labels.append(np.array([0,1]))
         labels.append(1)
-
-        if i==2000:
-            break
 
     vector_urls = []
     for tokenized_url in tokenized_urls:
@@ -129,10 +123,6 @@ def create_vocab(tokens):
     inverse_vocab = {index: token for token, index in vocab.items()}
 
     return vocab, inverse_vocab
-
-def vectorize(tokens, vocab):
-    example_sequence = [vocab[word] for word in tokens]
-    return example_sequence
 
 def generate_context_word_pairs(corpus, window_size, vocab_size):
     context_length = window_size*2

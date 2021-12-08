@@ -32,7 +32,8 @@ from keras.layers import Embedding
 ## for tokens
 import pickle as pk
 from pickle import dump, load
-from data.tokenizer import URLTokens, JSToken 
+from data.tokenizer import URLTokens, JSToken
+from metrics import get_precision, get_recall, get_f1, get_accuracy
 
 ## LSTM based on DeepXSS by Yong Fang, Yang Li, Liang Liu, Cheng Huang
 
@@ -192,8 +193,19 @@ def main():
             batch_size=16,
         )
 
-        x = model.predict(np.array(features[test_indices]))
-        print(f'Accuracy: {prediction_precision(x, labels[test_indices])}')
+        predictions = model.predict(np.array(features[test_indices]))
+        predictions = np.argmax(predictions, axis=1)
+
+        max_labels = np.argmax(labels[test_indices], axis=1)
+
+        print(predictions)
+        print(max_labels)
+
+        precision = get_precision(predictions, max_labels)
+        recall = get_recall(predictions, max_labels)
+        f1 = get_f1(predictions, max_labels)
+        accuracy = get_accuracy(predictions, max_labels)
+
         print("Fold {} complete.".format(i))
 
 if __name__ == '__main__':
