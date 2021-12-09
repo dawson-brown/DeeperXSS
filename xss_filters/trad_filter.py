@@ -1,4 +1,4 @@
-from bleach import clean
+# from bleach import clean
 import re
 import numpy as np
 from metrics import get_precision, get_recall, get_f1, get_accuracy

@@ -63,8 +63,8 @@ def lstm_model(token_contents: str, cross_val=10, num_elems=-1) -> List[dict]:
         # see: https://www.tensorflow.org/api_docs/python/tf/keras/Sequential#fit
         _history = model.fit(x=features[train_indices],
             y=labels[train_indices],
-            epochs=2,
-            batch_size=32
+            epochs=10,
+            batch_size=16
         )
 
         predictions = model.predict(np.array(features[test_indices]))
