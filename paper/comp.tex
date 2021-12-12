@@ -1,0 +1,51 @@
+\begin{table}
+\begin{center}
+\begingroup
+\setlength{\tabcolsep}{10pt} % Default value: 6pt
+\renewcommand{\arraystretch}{1.5} % Default value: 1
+\begin{tabular}{|| c | c | c ||} 
+    \hline
+    Prediction & XSS & Not XSS \\ 
+    \hline\hline
+    \textbf{Predicted XSS} &  $t_p$ & $f_p$ \\ 
+    \hline
+    \textbf{Predicted Not XSS} & $f_n$ & $t_n$ \\
+    \hline
+\end{tabular}
+\endgroup
+\caption{\label{conf-mat}Confusion Matrix}
+\end{center}
+\end{table}
+
+
+\begin{align*}
+    &\text{Precision} = \frac{t_p}{t_p + f_p} \\[10pt]
+    &\text{Recall} = \frac{t_p}{t_p + f_n} \\[10pt]
+    &\text{F1} = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}\\[10pt]
+    &\text{Accuracy} = \frac{t_p + t_n}{t_p + t_n + f_p + f_n}
+\end{align*}
+
+\begin{table}
+\begin{center}
+\begingroup
+\setlength{\tabcolsep}{10pt} % Default value: 6pt
+\renewcommand{\arraystretch}{1.5} % Default value: 1
+\begin{tabular}{|| c | c | c | c | c ||} 
+    \hline
+    Model & Precision & Recall & F1 & Accuracy \\ 
+    \hline\hline
+    \textbf{DeepXSS} &  0.995 & 0.979 & 0.987 & n/a \\ 
+    \hline
+    \textbf{DeeperXSS:softmax} & 0.989 & 0.973 & 0.981 & 0.981 \\
+    \hline
+    \textbf{DeeperXSS:sigmoid} & 0.988 & 0.976 & 0.982 & 0.983 \\
+    \hline
+    \textbf{DeeperXSS:sequence} & 0.991 & 0.956 & 0.973 & 0.975 \\
+    \hline
+    \textbf{DeeperXSS:random} & 0.099 & 0.097 & 0.098 & 0.56 \\
+    \hline
+\end{tabular}
+\endgroup
+\caption{\label{comparison}Model Comparison.}
+\end{center}
+\end{table}

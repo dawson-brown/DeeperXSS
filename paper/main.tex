@@ -3,6 +3,7 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{seqsplit}
+\usepackage{amsmath}
 \newcommand{\url}[1]{{\ttfamily\seqsplit{#1}}}
 
 \title{DeeperXSS: An Exploration of the DeepXSS Approach}
@@ -26,10 +27,12 @@ DeeperXSS is a...
 
 
 \section{DeepXSS}
+This section breifly outlines the DeepXSS approach and high-lights some its shortcomings as they relate to reproducibility.
 \input{deepxss}
 
 
 \section{DeeperXSS: exploring DeepXSS}
+In this section we outline our approach for recreating the DeepXSS architecture, including difficulties we had in reproducibility, limitations with DeepXSS that needed to be addressed, some creative liberties we took, and a few alternative machine learning architectures that proved interesting. 
 \input{deeperxss}
 
 

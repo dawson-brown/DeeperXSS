@@ -64,6 +64,9 @@ In DeepXSS they defined and looked for six different kinds of token summarized i
 
 \begin{table}
 \begin{center}
+\begingroup
+\setlength{\tabcolsep}{10pt} % Default value: 6pt
+\renewcommand{\arraystretch}{1.5} % Default value: 1
 \begin{tabular}{||c | c||} 
     \hline
     Classification & Example \\ [0.5ex] 
@@ -81,6 +84,7 @@ In DeepXSS they defined and looked for six different kinds of token summarized i
     \textbf{Other} & $>$, ), \#, etc... \\ [1ex] 
     \hline
 \end{tabular}
+\endgroup
 \caption{\label{tok:tab}DeepXSS Tokens.}
 \end{center}
 \end{table}
@@ -89,6 +93,9 @@ We expanded on this set of tokens and ended up with a total of 14 token types. T
 
 \begin{table}
 \begin{center}
+\begingroup
+\setlength{\tabcolsep}{10pt} % Default value: 6pt
+\renewcommand{\arraystretch}{1.5} % Default value: 1
 \begin{tabular}{||c | c||} 
     \hline
     Classification & Example \\ [0.5ex] 
@@ -108,6 +115,7 @@ We expanded on this set of tokens and ended up with a total of 14 token types. T
     \textbf{Identifier} & iden, value, hello, goodbye, etc... \\ [1ex] 
     \hline
 \end{tabular}
+\endgroup
 \caption{\label{exp:tok:tab}Expanded DeepXSS Tokens.}
 \end{center}
 \end{table}
@@ -146,6 +154,37 @@ Note that if two different token types overlap, the one that starts earlier is p
 
 
 \subsection{LSTM Classifier}
+
+\begin{table}
+\begin{center}
+\begingroup
+\setlength{\tabcolsep}{10pt} % Default value: 6pt
+\renewcommand{\arraystretch}{1.5} % Default value: 1
+\begin{tabular}{|| c | c | c | c ||} 
+    \hline
+    Model & Output Layer & Embedding & Input Sequence \\ 
+    \hline\hline
+    \textbf{Value-Softmax} & softmax & CBOW & Token values \\
+    \hline
+    \textbf{Value-Sigmoid} &  sigmoid & CBOW & Token values \\ 
+    \hline
+    \textbf{Value-Sequential} & softmax & None & Token values \\
+    \hline
+    \textbf{Value-Random} & softmax & Random & Token values \\
+    \hline
+    \textbf{Type-Softmax} & softmax & CBOW & Token types \\
+    \hline
+    \textbf{Type-Sigmoid} & sigmoid & CBOW & Token types \\
+    \hline
+    \textbf{Type-Sequential} & softmax & None & Token types \\
+    \hline
+    \textbf{Type-Random} & softmax & Random & Token types \\
+    \hline
+\end{tabular}
+\endgroup
+\caption{\label{model-sum}Summary of Models}
+\end{center}
+\end{table}
 
 
 

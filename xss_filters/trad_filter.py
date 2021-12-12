@@ -1,26 +1,23 @@
-# from bleach import clean
+from bleach import clean
 import re
 import numpy as np
 from metrics import get_precision, get_recall, get_f1, get_accuracy
 
 
-# def xss_filter(filename: str):
-#     total_filtered = 0
-#     total_not_filtered = 0
-#     with open(filename, 'r') as not_dec_xss:
-#         lines = not_dec_xss.read().splitlines()
-#         total = len(lines)
-#         for line in lines:
-#             cleaned_line = clean(line)
-#             if cleaned_line == line:
-#                 total_not_filtered += 1
-#             else:
-#                 # print(f'line: {line}')
-#                 # print(f'cleaned line: {cleaned_line}')
-#                 total_filtered += 1
+def xss_sanitizer(filename: str):
+    total_sanitized = 0
+    total_not_sanitized = 0
+    with open(filename, 'r') as not_dec_xss:
+        lines = not_dec_xss.read().splitlines()
+        total = len(lines)
+        for line in lines:
+            cleaned_line = clean(line)
+            if cleaned_line == line:
+                total_not_sanitized += 1
+            else:
+                total_sanitized += 1
 
-#     print(f'total: {total}, total filtered: {total_filtered}, total not filtered: {total_not_filtered}')
-#     print(f'Precision: {total_filtered / total}\n')
+    print(f'total: {total}, total sanitized: {total_sanitized}, total not sanitized: {total_not_sanitized}')
 
 
 def tag_search(dmoz: str, xss: str):
@@ -63,7 +60,9 @@ def tag_search(dmoz: str, xss: str):
 
 
 def main():
-    print(f"{tag_search('data/dmoz_dir.txt', 'data/dec_xss_urls.txt')}")
+    # print(f"{tag_search('data/dmoz_dir.txt', 'data/dec_xss_urls.txt')}")
+    xss_sanitizer('data/dec_xss_urls.txt')
+    xss_sanitizer('data/xss_urls.txt')
 
 
     
