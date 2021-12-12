@@ -1,55 +1,71 @@
-\documentclass{llncs} 
+%%%% 
+% This is a template for project reports in the subject DAT620 at the
+% Department of Electrical Engineering and Computer Science,
+% University of Stavanger.
+% 
+% The template is based on the ACM conference template 
+% it was edited by Leander Jehl and Hein Meling
+\documentclass[sigconf]{acmart}
 
-\usepackage{algorithm}
-\usepackage{algpseudocode}
-\usepackage{seqsplit}
-\usepackage{amsmath}
-\newcommand{\url}[1]{{\ttfamily\seqsplit{#1}}}
+\input{dat620-setup}
 
-\title{DeeperXSS: An Exploration of the DeepXSS Approach}
-\author{Matthew Bush, matthew.bush@ryerson.ca\\Dawson Brown, dawson.brown@ryerson.ca}
-\institute{Ryerson University}
 
-\date{}
+%In the preamble file you can include packages and define macros.
+\input{preamble}
+
 \begin{document}
-\maketitle
-\pagestyle{plain}
+%TODO: Replace the title with your project title.
+\title{DeeperXSS: An Exploration of the DeepXSS Approach}
+%you may use a subtitle
+% \subtitle{My project subtitle}
+
+%TODO replace author names with your name and email below:
+\author{Matthew Bush, Dawson Brown}
+\affiliation{Ryerson University, Toronto, Canada}
+\email{matthew.bush@ryerson.ca, dawson.brown@ryerson.ca}
+
+%TODO: add the name of one or more supervisors
+\supervisors{Prof. Manar Alalfi}
+
+
 
 \begin{abstract}
-DeeperXSS is a...
-
-\keywords{First keyword  \and Second keyword \and Another keyword.}
+%The abstract lies in a different file: 
+\input{tex/abstract}
 \end{abstract}
 
+%TODO: Replace with some keywords, relevant for your project
+\keywords{Report writing, Latex tips}
+
+\maketitle
+
+%Each section can be placed in a separate file and included by the input command.
 
 \section{Introduction}
-\input{intro}
+\label{sec:introduction}
+\input{tex/introduction}
 
+\section{Background: DeepXSS}
+\label{sec:background}
+\input{tex/background}
 
-\section{DeepXSS}
-This section breifly outlines the DeepXSS approach and high-lights some its shortcomings as they relate to reproducibility.
-\input{deepxss}
+\section{Our Approach: DeeperXSS}
+\label{sec:method}
+\input{tex/method}
 
-
-\section{DeeperXSS: exploring DeepXSS}
-In this section we outline our approach for recreating the DeepXSS architecture, including difficulties we had in reproducibility, limitations with DeepXSS that needed to be addressed, some creative liberties we took, and a few alternative machine learning architectures that proved interesting. 
-\input{deeperxss}
-
-
-\section{Comparison}
-\input{comp}
-
+\section{Evaluation}
+\label{sec:evaluation}
+\input{tex/evaluation}
 
 \section{Related Work}
-\input{related}
+\label{sec:related}
+\input{tex/related}
 
+\section{Discussion and Conclusion}
+\label {sec:conclusion}
+\input{tex/conclusion.tex}
 
-\section{Discussion and Concludion}
-\input{conc}
-
-
-\newpage
+\bibliographystyle{ACM-Reference-Format}
 \bibliography{ref}
-\bibliographystyle{splncs04}
 
 \end{document}
