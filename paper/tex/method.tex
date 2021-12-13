@@ -62,7 +62,7 @@ No decoders will succeed here making this the final form.
 
 
 \subsubsection{Tokenization}
-As seen in table \ref{tok:tab}, DeepXSS defined six different token types. We expanded on this set of tokens and ended up with a total of 14 token types. The reason we expanded on this token set is because many URLs contained zero tokens. For example \url{http://www.wittebeer.be/?oid=911\&pid=8056} or \url{http://www.facebook.com/Euphnet?sk=wall}, both of which are in the DMOZ directory, do not contain any of their token types. We didn't want our classifier to come to learn that benign URLs are largely empty; we wanted it to learn the structure of benign and malicious URLs. As such, we expanded their table to include 8 more as shown in table \ref{exp:tok:tab}.
+As seen in table \ref{tok:tab}, DeepXSS defined six different token types. We expanded on this set of tokens and ended up with a total of 14 token types. The reason we expanded on this token set is because many URLs contained zero tokens. For example \url{http://www.wittebeer.be/?oid=911\&pid=8056} or \url{http://www.facebook.com/Euphnet?sk=wall}, both of which are in the DMOZ directory, do not contain any of their token types. Using more token types common to normal URLs and increasing the feature richness as a way to have benign samples not be empty was something we encountered in the literature \cite{mokbal2019mlpxss}\cite{zhang2019cross}. But put basically, we didn't want our classifier to come to learn that benign URLs are largely empty; we wanted it to learn the structure of both benign and malicious URLs. As such, we expanded their table to include 8 more as shown in table \ref{exp:tok:tab}.
 
 
 \begin{table}
