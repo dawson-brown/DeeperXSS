@@ -4,7 +4,7 @@ In this section we outline our approach for recreating the DeepXSS architecture,
 \subsubsection{Decoding}
 We built a custom recursive URL decoder. This decoder performs a depth first search of 5 different decodings. At each level, the decoder tries to decode the URL with all decodings, for each decoding that is successfull, the decoder will recursively try to further decode the string that resulted from the decoding; see algorithm \ref{decoder} for a pseudocode implementation. The first string enoucountered that none of the decoders can decode is returned as the decoded string. The supported encodings are: URL unicode encoding (this includes characters of the form \%uxxxx and \textbackslash uxxxx),URL encoding (that is characters of the form \%xx), HTML character references (that is characters of the form \&xx;), hex encoding, and base64 encoding. 
 
-The major steps of the algorithm are as follows: on line \ref{dec:all} all the decoder functions are called and passed the URL to be decoded. These functions all return a Tuple of the form (Boolean, String) where the Boolean value indicates if the decoding was successfull while the String is the decoded string (the String remains unchanged if the decoding fails). Next, on line \ref{dec:res}, the result tuples of all the attempted decoders are looped over. If it's found that a decoder was successful (line \ref{dec:check}) then recurisvely call the decoder on the resulting string (line \ref{dec:rec}). If the recursive decoding succeeds than return the result of the recursive call (\ref{dec:rec:true}). If the decoder gets to line \ref{dec:nrec}, than that means one of two things happened: either none of the decoders succeeded, in which case the string must be fully decoded and so we go to line \ref{dec:true}; if on the other hand some of the decoders succeeded, then if the algorithm gets to line \ref{dec:nrec} it must have been the case that none of the recursive calls succeeded (meaning line \ref{dec:rec:true} was never reached) which means the decoder was unable to decode the string, and line \ref{dec:false} is run. 
+Algorithm \ref{decoder} works as follows: on line \ref{dec:all} all the decoder functions are called and passed the URL to be decoded. These functions all return a Tuple of the form (Boolean, String) where the Boolean value indicates if the decoding was successfull while the String is the decoded string (the String remains unchanged if the decoding fails). Next, on line \ref{dec:res}, the result tuples of all the attempted decoders are looped over. If it's found that a decoder was successful (line \ref{dec:check}) then recurisvely call the decoder on the resulting string (line \ref{dec:rec}). If the recursive decoding succeeds than return the result of the recursive call (\ref{dec:rec:true}). If the decoder gets to line \ref{dec:nrec}, than that means one of two things happened: either none of the decoders succeeded, in which case the string must be fully decoded and so we go to line \ref{dec:true}; if on the other hand some of the decoders succeeded, then if the algorithm gets to line \ref{dec:nrec} it must have been the case that none of the recursive calls succeeded (meaning line \ref{dec:rec:true} was never reached) which means the decoder was unable to decode the string and we return on line \ref{dec:false}. 
 
 \begin{algorithm}
 \caption{Recursive Decoder}\
@@ -38,7 +38,7 @@ The major steps of the algorithm are as follows: on line \ref{dec:all} all the d
 \end{algorithmic}
 \end{algorithm}
 
-To clarify now what the decoder will actually do with a URL, consider the URL:
+To clarify with an example, consider the URL:
 
 \urlline{http://example.com/706174682F746F2F66696C653F783D26616D703B6C743B73637269707426616D703B67743B253230616C65727428253230312532302925323026616D703B6C743B2F73637269707426616D703B67743B}. 
 
@@ -46,7 +46,7 @@ Passing this through the decoder, the Hex decoder will succeed and produce the s
 
 \urlline{http://example.com/path/to/file?x=\&amp;lt;script\&amp;gt;\%20alert(\%201\%20)\%20\&amp;lt;/script\&amp;gt;} 
 
-the the URL decoder will succeed giving the string: 
+then the URL decoder will succeed giving the string: 
 
 \urlline{http://example.com/path/to/file?x=\&amp;lt;script\&amp;gt; alert( 1 ) \&amp;lt;/script\&amp;gt;}
 
@@ -58,11 +58,11 @@ and finally the HTML decoder will succeed again and give:
 
 \urlline{http://example.com/path/to/file?x=<script> alert( 1 ) </script>}. 
 
-At this point, no decoders will succeed and so the decoded string will be returned on line \ref{dec:true}.
+No decoders will succeed here making this the final form.
 
 
 \subsubsection{Tokenization}
-As seen in table \ref{tok:tab}, DeepXSS defined and looked for six different kinds of tokens. We expanded on this set of tokens and ended up with a total of 14 token types. The reason we expanded on this token set is because many many URLs especially benign URLs) contained zero tokens. For example \url{http://www.wittebeer.be/?oid=911\&pid=8056} or \url{http://www.facebook.com/Euphnet?sk=wall}, both of which are in the DMOZ directory, do not contain any of their token types. As such, we expanded their table to include 8 more as shown in table \ref{exp:tok:tab}.
+As seen in table \ref{tok:tab}, DeepXSS defined six different token types. We expanded on this set of tokens and ended up with a total of 14 token types. The reason we expanded on this token set is because many URLs contained zero tokens. For example \url{http://www.wittebeer.be/?oid=911\&pid=8056} or \url{http://www.facebook.com/Euphnet?sk=wall}, both of which are in the DMOZ directory, do not contain any of their token types. We didn't want our classifier to come to learn that benign URLs are largely empty; we wanted it to learn the structure of benign and malicious URLs. As such, we expanded their table to include 8 more as shown in table \ref{exp:tok:tab}.
 
 
 \begin{table}
@@ -94,14 +94,12 @@ As seen in table \ref{tok:tab}, DeepXSS defined and looked for six different kin
 \end{center}
 \end{table}
 
-An integer argument token is any integer value that follows a function name token and is enclosed in brackets. Similarly, a string argument token is taken to be any argument that isn't an integer; hence \textit{String.fromCharCode(65)} being an example of a string argument. We figured that distinguishing futher between tokens would be superfluous, and by inspection these were the most common arguments and even if the argument was a function call, the return value was almost always either an integer or a string. The integer constant token was introduced because many URLs contained non-descript integers outside of function calls and URL arguments. The two assignment tokens (left-hand side and right-hand side) were introduced so that URL arguments would not be lost (notice that the two benign examples include arguments that are skipped by DeepXSS). Similarly, path tokens were intoduced so that the path wasn't entirely skipped. And finally we introduced a generic identifier token. Assignment LHS, Path, Script URL, Function Name, and Windows Events all begin with an identifier but all have additional characters to further distinguish them (for example Windows evens always start with `on' and end with `=', paths end with `/' or `?', etc). Any identifier that is found that cannot be further categorized is included as a generic Identifier token.
+An integer argument token is any integer value that follows a function name token and is enclosed in brackets. Similarly, a string argument token is taken to be any argument that isn't an integer; hence \textit{String.fromCharCode(65)} being an example of a string argument. We figured that distinguishing futher between arguments would be superfluous, and by inspection these were the most common arguments (including functions which returned a string or integer). The integer constant token was introduced because many URLs contained non-descript integers outside of function calls and URL arguments. The two assignment tokens (left-hand side and right-hand side) were introduced so that URL arguments would not be lost (notice that the two benign examples include arguments that are skipped by DeepXSS). Similarly, path tokens were intoduced so that the path wasn't entirely skipped. And finally we introduced a generic identifier token. Assignment LHS, Path, Script URL, Function Name, and Windows Events all begin with an identifier but all have additional characters to further distinguish them (for example Windows Events always start with `on' and end with `=', paths end with `/' or `?', etc). Any identifier that is found that cannot be further categorized is included as a generic Identifier token.
 
 \subsubsection{Generalization}
-In keeping with DeepXSS \cite{fang2018deepxss}, we generalized many parts of the URL. In the original paper all the domains became simply \textit{website}. In our case, we simply ommitted the domain since including \textit{website} for every domain communicates no information. We mapped all integer arguments to `(1)' and all string arguments to `(``str\_arg'')'. All integer constants were mapped to 1. The left-hand side of assignments were all generalized to `assign<num>=' where `<num>' starts from 0 and increments for each encountered left-hand side. This was done because most identifiers in URLs proved to be unique, and so not useful in classification (especially when using CBOW) with the exception of Function Names, script URLs, and Windows Events which are reserved words and so can't be unique across many URLs. The right-hand sides also took the form `val<num>' where `<num>' again increments with each right-hand side encountered. Similarly, all path tokens were mapped to `path<num>/' where `<num>' again starts at 0 and increments with each path token that's found. Finally all identifier tokens were mapped to `ident<num>'.
+In keeping with DeepXSS, we generalized many parts of the URL. In the original paper all the domains became simply `website'. Having every URL begin with `http://website' communicates no information and so we simply ommitted the domain. We mapped all integer arguments to `(1)' and all string arguments to `(``str\_arg'')'. All integer constants were mapped to `1'. The left-hand side of assignments were all generalized to `assign<num>=' where `<num>' starts from 0 and increments for each encountered left-hand side. This was done because most identifiers in URLs proved to be unique, and so not useful in classification (especially when using CBOW) with the exception of Function Names, script URLs, and Windows Events which are reserved words and so can't be unique across many URLs. The right-hand sides are generalized to `val<num>' where `<num>' again increments with each right-hand side encountered. Similarly, all path tokens are generalized to `path<num>/' and finally all identifier tokens were mapped to `ident<num>'.
 
-
-\subsubsection{An Example}
-To take for example \urlline{http://website/search.php?uid=ws848d8024088c327.36898031\&src=\&term=<script>alert(123)</script>\&args=qs=06o} the following sequence of (token type, token value) pairs would be extracted going left to right:
+To clarify the tokenization and generalization process with an example, consider \urlline{http://website/search.php?uid=ws848d8024088c327.36898031\&src=\&term=<script>alert(123)</script>\&args=qs=06o}. The following sequence of (token type, token value) pairs would be extracted going left to right:
 
 \begin{enumerate}
 \item \texttt{(Path, `path0/')} for \url{search.php?}
@@ -120,7 +118,7 @@ To take for example \urlline{http://website/search.php?uid=ws848d8024088c327.368
 \item \texttt{(Identifier, `o')} for \texttt{o}
 \end{enumerate}
 
-Note that if two different token types overlap, the one that starts earlier is preferred; if they start in the same place then the one that extends further is preferred. This is why `args=qs=' is taken to be two left-hand sides--the `qs' could be a right-hand side, but with the equals on the right its taken to be a left-hand side since that is longer and both start at the `q'. As per the last two tokens, identifiers cannot start with numbers  (in Javascript) and so the 06o is taken to be an integer constant and an identifier.
+Note that if two different token types overlap, the one that starts earlier is preferred; if they start in the same place then the one that extends further is preferred. This is why `args=qs=' is taken to be two left-hand sides--the `qs' could be a right-hand side, but with the equals on the right its taken to be a left-hand side since that is longer and both start at the `q'. As per the last two tokens, identifiers cannot start with numbers  (in Javascript) and so the 06o is taken to be an integer constant followed by an identifier.
 
 
 \subsection{Word2Vec}
