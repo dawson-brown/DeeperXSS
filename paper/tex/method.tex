@@ -126,10 +126,25 @@ Note that if two different token types overlap, the one that starts earlier is p
 As one of the primary stated contributions of the original DeepXSS \cite{fang2018deepxss} paper, properly implementing CBOW for Word2Vec is an important part of our recreation. Unfortunately, the authors do not give good indication as to how CBOW was applied, merely stating that CBOW was used to construct word representations.  We therefore took liberties with our implementation and based many decisions on the work from \cite{afzal2021deeplearning}.  One major point of confusion was whether CBOW representations were constructed for token labels, or the token itself.  To test the difference, we implemented both.
 
 \begin{figure}[H]
-	\includegraphics[width=0.7\textwidth, angle=0]{cbow_model}
+	\includegraphics[width=0.45\textwidth, angle=0]{cbow_model}
 \end{figure}
 
+\begin{lstlisting}[caption=Related token values, label=cbow-exp-value]
+<script>: >,ident1,</title>,path4/,<h1>
+alert: ident11,ident13,ident12,<img>,path4/
+</script>: <h1>,<marquee>,ident2,ident4,ident5
+(1): ident4,<"<<script>,javascript,</style>,</title>
+path0/: assign0=,ident1,ident0,</title>,<iframe>  
+\end{lstlisting}
 
+
+\begin{lstlisting}[caption=Related token types, label=cbow-exp-type]
+path: int_const,value,int_arg,func_name,assign
+int_const: path,value,assign,func_name,int_arg
+assign: value,other,int_cons,int_arg,str_arg
+value: assign,other,int_const,int_arg,func_name
+ident: other,start_label,value,assign,int_arg  
+\end{lstlisting}
 
 
 \subsection{LSTM Classifier}
