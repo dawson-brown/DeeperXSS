@@ -101,22 +101,24 @@ In keeping with DeepXSS, we generalized many parts of the URL. In the original p
 
 To clarify the tokenization and generalization process with an example, consider \urlline{http://website/search.php?uid=ws848d8024088c327.36898031\&src=\&term=<script>alert(123)</script>\&args=qs=06o}. The following sequence of (token type, token value) pairs would be extracted going left to right:
 
-\begin{enumerate}
-\item \texttt{(Path, `path0/')} for \url{search.php?}
-\item \texttt{(Assignment LHS, `assign0=')} for \texttt{uid=}
-\item \texttt{(Assignment RHS, `val0')} for \texttt{=ws848d8024088c327}
-\item \texttt{(Integer Constant, 1)} for \texttt{36898031}
-\item \texttt{(Assignment LHS, `assign1=')} for \texttt{src=}
-\item \texttt{(Assignment LHS, `assign2=')} for \texttt{term=}
-\item \texttt{(Start Label, `<script>')} for \texttt{<script>}
-\item \texttt{(Function Name, `alert')} for \texttt{alert(}
-\item \texttt{(Integer Argument, `(1)')} for \texttt{(123)}
-\item \texttt{(End Label, `</script>')} for \texttt{<script>}
-\item \texttt{(Assignment LHS, `assign3=')} for \texttt{args=}
-\item \texttt{(Assignment LHS, `assign4=')} for \texttt{qs=}
-\item \texttt{(Integer Constant, `06')} for \texttt{06}
-\item \texttt{(Identifier, `o')} for \texttt{o}
-\end{enumerate}
+
+\begin{lstlisting}[caption=Example tokenization, label=tokenization]
+(Path, `path0/') for search.php?
+(Assignment LHS, `assign0=') for uid=
+(Assignment RHS, `val0') for =ws848d8024088c327
+(Integer Constant, 1) for 36898031
+(Assignment LHS, `assign1=') for src=
+(Assignment LHS, `assign2=') for term=
+(Start Label, `<script>') for <script>
+(Function Name, `alert') for alert(
+(Integer Argument, `(1)') for (123)
+(End Label, `</script>') for <script>
+(Assignment LHS, `assign3=') for args=
+(Assignment LHS, `assign4=') for qs=
+(Integer Constant, `06') for 06
+(Identifier, `o') for o
+\end{lstlisting}
+
 
 Note that if two different token types overlap, the one that starts earlier is preferred; if they start in the same place then the one that extends further is preferred. This is why `args=qs=' is taken to be two left-hand sides--the `qs' could be a right-hand side, but with the equals on the right its taken to be a left-hand side since that is longer and both start at the `q'. As per the last two tokens, identifiers cannot start with numbers  (in Javascript) and so the 06o is taken to be an integer constant followed by an identifier.
 
@@ -126,11 +128,11 @@ Note that if two different token types overlap, the one that starts earlier is p
 As one of the primary stated contributions of the original DeepXSS \cite{fang2018deepxss} paper, properly implementing CBOW for Word2Vec is an important part of our recreation. Unfortunately, the authors do not give good indication as to how CBOW was applied, merely stating that CBOW was used to construct word representations. We therefore took liberties with our implementation and based many decisions on the work from \cite{afzal2021deeplearning}. One major point of confusion was whether CBOW representations were constructed for token type labels, or the token itself. To test the difference, we implemented both.
 
 In order to generate the CBOW embeddings we first needed to build a vocabulary of tokens with each token represented by a unique integer. Zeros represent padding tokens which are used later in the process.  Once the vocabulary is constructed, each list of URL tokens is replaced with corresponding integer representations.  Every vectorized URL is then padded with zeros until they are all a uniform length.  The padding tokens ensure that empty space does not influence the outcomes of the model.
-Fig. 1 shows the architecture for the model we use to generate our CBOW embeddings.  For every token in our vectorized URL, the CBOW model attempts to predict the current token using the tokens around it.  Using a window size of two means that our CBOW model will attempt to predict the middle token using two adjacent tokens on either side of it.  As the model does this for every token in the dataset, the weights of the embedding layer are trained.  The embedding layer is responsible for taking each token and turning it into a multidimensional representation.  In the case of token type labels, each token will have a ten-dimensional representation and token values receive a 50-dimensional representation.
+Figure \ref{cbow-arch} shows the architecture for the model we use to generate our CBOW embeddings.  For every token in our vectorized URL, the CBOW model attempts to predict the current token using the tokens around it.  Using a window size of two means that our CBOW model will attempt to predict the middle token using two adjacent tokens on either side of it.  As the model does this for every token in the dataset, the weights of the embedding layer are trained.  The embedding layer is responsible for taking each token and turning it into a multidimensional representation.  In the case of token type labels, each token will have a ten-dimensional representation and token values receive a 50-dimensional representation.
 
 \begin{figure}[H]
     \includegraphics[width=0.45\textwidth, angle=0]{cbow_model}
-\end{figure}
+\end{figure} \label{cbow-arch}
 
 \begin{lstlisting}[caption=Related token values, label=cbow-exp-value]
 <script>: >,ident1,</title>,path4/,<h1>
@@ -141,6 +143,7 @@ path0/: assign0=,ident1,ident0,</title>,<iframe>
 \end{lstlisting}
 
 
+
 \begin{lstlisting}[caption=Related token types, label=cbow-exp-type]
 path: int_const,value,int_arg,func_name,assign
 int_const: path,value,assign,func_name,int_arg
@@ -149,7 +152,7 @@ value: assign,other,int_const,int_arg,func_name
 ident: other,start_label,value,assign,int_arg  
 \end{lstlisting}
 
-Extracting the weights from the embedding layer and calculating the Euclidean distance between tokens allows us to see an example of similar words according to our CBOW embeddings.  Fig. 2 shows examples of the five most closely related tokens for both token value and token type.
+Extracting the weights from the embedding layer and calculating the Euclidean distance between tokens allows us to see an example of similar words according to our CBOW embeddings. Listing \ref{cbow-exp-value} shows examples of the five most closely related token values and Listing \ref{cbow-exp-type} shows examples of the five most closely related token types.
 
 Training each new CBOW model on the entire dataset could take as many as 24 hours meaning we needed to make changes to the tokenization process to produce better generalized data.  This sped up CBOW generation but likely resulted in some lost semantic information.
 
