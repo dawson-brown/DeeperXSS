@@ -125,6 +125,13 @@ Note that if two different token types overlap, the one that starts earlier is p
 
 \subsection{Word2Vec}
 
+As one of the primary stated contributions of the original DeepXSS \cite{fang2018deepxss} paper, properly implementing CBOW for Word2Vec is an important part of our recreation. Unfortunately, the authors do not give good indication as to how CBOW was applied, merely stating that CBOW was used to construct word representations.  We therefore took liberties with our implementation and based many decisions on the work from \cite{afzal2021deeplearning}.  One major point of confusion was whether CBOW representations were constructed for token labels, or the token itself.  To test the difference, we implemented both.
+
+\begin{figure}[H]
+	\includegraphics[width=0.7\textwidth, angle=0]{cbow_model}
+\end{figure}
+
+
 
 
 \subsection{LSTM Classifier}
