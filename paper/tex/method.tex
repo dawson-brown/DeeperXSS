@@ -64,6 +64,7 @@ At this point, no decoders will succeed and so the decoded string will be return
 \subsubsection{Tokenization}
 As seen in table \ref{tok:tab}, DeepXSS defined and looked for six different kinds of tokens. We expanded on this set of tokens and ended up with a total of 14 token types. The reason we expanded on this token set is because many many URLs especially benign URLs) contained zero tokens. For example \url{http://www.wittebeer.be/?oid=911\&pid=8056} or \url{http://www.facebook.com/Euphnet?sk=wall}, both of which are in the DMOZ directory, do not contain any of their token types. As such, we expanded their table to include 8 more as shown in table \ref{exp:tok:tab}.
 
+
 \begin{table}
 \begin{center}
 \begingroup
