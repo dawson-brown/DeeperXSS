@@ -252,11 +252,11 @@ def main():
     
     # train_CBOW("value", 5)
 
-    cbow = keras.models.load_model('cbow_model_token_value')
+    cbow = keras.models.load_model('cbow_model_token_type')
 
-    with open('vocab_value.pickle', 'rb') as handle:
+    with open('vocab_type.pickle', 'rb') as handle:
         vocab = pk.load(handle)
-    with open('inv_vocab_value.pickle', 'rb') as handle:
+    with open('inv_vocab_type.pickle', 'rb') as handle:
         inverse_vocab = pk.load(handle)
 
 
@@ -264,7 +264,7 @@ def main():
     weights = weights[1:]
     print(weights.shape)
 
-    print(pd.DataFrame(weights, index=list(inverse_vocab.values())[1:]).head())
+    # print(pd.DataFrame(weights, index=list(inverse_vocab.values())[1:]).head())
 
     from sklearn.metrics.pairwise import euclidean_distances
 
@@ -273,14 +273,14 @@ def main():
 
 
     search_terms = []
-    for i in range(0, len(inverse_vocab)):
-        if i == 10:
+    for i in range(1, len(inverse_vocab)):
+        if i == 6:
             break
         search_terms.append(inverse_vocab[i])
 
     # view contextually similar words
     similar_words = {search_term: [inverse_vocab[idx] for idx in distance_matrix[vocab[search_term]-1].argsort()[1:6]+1] 
-                    for search_term in ['<script>', 'alert', '</script>']}#search_terms}
+                    for search_term in search_terms}#search_terms}
 
     print(similar_words)
 
