@@ -2,7 +2,8 @@ from lstm_sigmoid import lstm_model as sigmoid_model
 from lstm_softmax import lstm_model as softmax_model
 from lstm_sequence import lstm_model as sequence_model
 from lstm_random_embed import lstm_model as random_embed_lstm
-from trad_filter import tag_search
+# from trad_filter import tag_search
+import keras.backend as K
 from data.tokenizer import URLTokens, JSToken
 
 
