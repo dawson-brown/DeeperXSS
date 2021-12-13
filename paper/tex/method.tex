@@ -123,10 +123,13 @@ Note that if two different token types overlap, the one that starts earlier is p
 
 \subsection{Word2Vec}
 
-As one of the primary stated contributions of the original DeepXSS \cite{fang2018deepxss} paper, properly implementing CBOW for Word2Vec is an important part of our recreation. Unfortunately, the authors do not give good indication as to how CBOW was applied, merely stating that CBOW was used to construct word representations.  We therefore took liberties with our implementation and based many decisions on the work from \cite{afzal2021deeplearning}.  One major point of confusion was whether CBOW representations were constructed for token labels, or the token itself.  To test the difference, we implemented both.
+As one of the primary stated contributions of the original DeepXSS \cite{fang2018deepxss} paper, properly implementing CBOW for Word2Vec is an important part of our recreation. Unfortunately, the authors do not give good indication as to how CBOW was applied, merely stating that CBOW was used to construct word representations. We therefore took liberties with our implementation and based many decisions on the work from \cite{afzal2021deeplearning}. One major point of confusion was whether CBOW representations were constructed for token type labels, or the token itself. To test the difference, we implemented both.
+
+In order to generate the CBOW embeddings we first needed to build a vocabulary of tokens with each token represented by a unique integer. Zeros represent padding tokens which are used later in the process.  Once the vocabulary is constructed, each list of URL tokens is replaced with corresponding integer representations.  Every vectorized URL is then padded with zeros until they are all a uniform length.  The padding tokens ensure that empty space does not influence the outcomes of the model.
+Fig. 1 shows the architecture for the model we use to generate our CBOW embeddings.  For every token in our vectorized URL, the CBOW model attempts to predict the current token using the tokens around it.  Using a window size of two means that our CBOW model will attempt to predict the middle token using two adjacent tokens on either side of it.  As the model does this for every token in the dataset, the weights of the embedding layer are trained.  The embedding layer is responsible for taking each token and turning it into a multidimensional representation.  In the case of token type labels, each token will have a ten-dimensional representation and token values receive a 50-dimensional representation.
 
 \begin{figure}[H]
-	\includegraphics[width=0.45\textwidth, angle=0]{cbow_model}
+    \includegraphics[width=0.45\textwidth, angle=0]{cbow_model}
 \end{figure}
 
 \begin{lstlisting}[caption=Related token values, label=cbow-exp-value]
@@ -145,6 +148,10 @@ assign: value,other,int_cons,int_arg,str_arg
 value: assign,other,int_const,int_arg,func_name
 ident: other,start_label,value,assign,int_arg  
 \end{lstlisting}
+
+Extracting the weights from the embedding layer and calculating the Euclidean distance between tokens allows us to see an example of similar words according to our CBOW embeddings.  Fig. 2 shows examples of the five most closely related tokens for both token value and token type.
+
+Training each new CBOW model on the entire dataset could take as many as 24 hours meaning we needed to make changes to the tokenization process to produce better generalized data.  This sped up CBOW generation but likely resulted in some lost semantic information.
 
 
 \subsection{LSTM Classifier}
