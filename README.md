@@ -16,3 +16,14 @@ The custom decoder can be found [here](https://github.com/dawson-brown/DeeperXSS
 
 ### Tokenizer
 The custom tokenizer can be found [here](https://github.com/dawson-brown/DeeperXSS/blob/519b92cb04870fdd31339caaa47a2bcd8f4da66d/xss_filters/data/tokenizer.py#L68).
+
+### Word2Vec
+
+The code for training the CBOW model can be found [here](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/word2vec.py).
+
+### Model Training
+The code for training the models:
+[Primary Model](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/lstm_softmax.py)
+[Sigmoid Output](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/lstm_sigmoid.py)
+[No Embedding Layer](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/lstm_sequence.py)
+[Randomly initialized Embedding Layer](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/lstm_random_embed.py)
