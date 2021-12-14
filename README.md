@@ -23,7 +23,7 @@ The code for training the CBOW model can be found [here](https://github.com/daws
 
 ### Model Training
 The code for training the models:
-[Primary Model](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/lstm_softmax.py)
-[Sigmoid Output](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/lstm_sigmoid.py)
-[No Embedding Layer](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/lstm_sequence.py)
+[Primary Model](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/lstm_softmax.py),
+[Sigmoid Output](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/lstm_sigmoid.py),
+[No Embedding Layer](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/lstm_sequence.py),
 [Randomly initialized Embedding Layer](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/lstm_random_embed.py)
