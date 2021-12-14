@@ -3,6 +3,10 @@
 \begingroup
 \setlength{\tabcolsep}{10pt} % Default value: 6pt
 \renewcommand{\arraystretch}{1.5} % Default value: 1
+
+Our implementation mimics the original paper’s use of 10-fold cross validation wherein the model is divided into ten equal subsets.  The model is trained ten times for ten epochs.  Each subset is used as a validation dataset exactly once, with the remaining data serving as training data.  The final results are an average of the ten models.  This process was repeated for all eight of the models we tested.
+The confusion matrix we show in \ref{conf-mat} is identical to the one used in DeepXSS \cite{fang2018deepxss}. $T_p$ (True Positive) indicates an actual XSS sample predicted to be XSS. $T_n$ (True Positive) indicates a benign sample predicted to be benign. $F_p$ are benign samples classified as malicious and $F_n$ is a malicious sample classified as benign.  These definitions are used to inform our key metrics, precision, recall, F1, and accuracy.  The calculations for these are shown in the formulae below.
+
 \begin{tabular}{|| c | c | c ||} 
     \hline
     Prediction & XSS & Not XSS \\ 
@@ -25,6 +29,8 @@
     &\text{Accuracy} = \frac{t_p + t_n}{t_p + t_n + f_p + f_n}
 \end{align*}
 
+\ref{comparison} and \ref{type:comparison} outline the comparison between our various models using both token values and token types respectively.  Our results are ultimately very similar to DeepXSS \cite{fang2018deepxss} for the primary models with the softmax output layer.  This indicates that our model was an acceptable recreation of the original. All other models also perform well with the very notable exception of the model with the randomly initialized embedding layer.
+
 \begin{table}
 \begin{center}
 \begingroup
@@ -36,13 +42,13 @@
     \hline\hline
     \textbf{DeepXSS} &  0.995 & 0.979 & 0.987 & n/a \\ 
     \hline
-    \textbf{DeeperXSS:softmax} & 0.989 & 0.973 & 0.981 & 0.981 \\
+    \textbf{DeeperXSS:softmax output} & 0.989 & 0.973 & 0.981 & 0.981 \\
     \hline
-    \textbf{DeeperXSS:sigmoid} & 0.988 & 0.976 & 0.982 & 0.983 \\
+    \textbf{DeeperXSS:sigmoid output} & 0.988 & 0.976 & 0.982 & 0.983 \\
     \hline
-    \textbf{DeeperXSS:sequence} & 0.991 & 0.956 & 0.973 & 0.975 \\
+    \textbf{DeeperXSS:no word embedding} & 0.991 & 0.956 & 0.973 & 0.975 \\
     \hline
-    \textbf{DeeperXSS:random} & 0.099 & 0.097 & 0.098 & 0.56 \\
+    \textbf{DeeperXSS:untrained embedding layer} & 0.099 & 0.097 & 0.098 & 0.56 \\
     \hline
 \end{tabular}
 \endgroup
@@ -65,9 +71,9 @@
         \hline
         \textbf{DeeperXSS:sigmoid} & 0.987 & 0.977 & 0.982 & 0.983 \\
         \hline
-        \textbf{DeeperXSS:sequence} & 0.983 & 0.955 & 0.969 & 0.97 \\
+        \textbf{DeeperXSS:no word embedding} & 0.983 & 0.955 & 0.969 & 0.97 \\
         \hline
-        \textbf{DeeperXSS:random} & 0.089 & 0.091 & 0.08 & 0.555 \\
+        \textbf{DeeperXSS:untrained embedding layer} & 0.089 & 0.091 & 0.08 & 0.555 \\
         \hline
     \end{tabular}
     \endgroup
