@@ -1,3 +1,12 @@
+# generate files
+*.pickle
+*.model
+cbow_model_token_type
+cbow_model_token_value
+*.dat
+data/*.txt
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
