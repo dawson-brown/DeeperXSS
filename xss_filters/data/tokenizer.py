@@ -140,8 +140,8 @@ def print_token_list(url_tok: URLTokens):
         print(token)
     print('')
 
-def tokenize_to_std(in_name: str, num = 0):
 
+def tokenize_to_std(in_name: str, num = 0):
     with open(in_name, 'r') as infile:
         lines = infile.read().splitlines()
 
@@ -155,8 +155,8 @@ def tokenize_to_std(in_name: str, num = 0):
             tmp = URLTokens(url, tokenize(url))
             print_token_list(tmp)
 
-def tokenize_to_file(in_name: str, start_line = 0, end_line = -1):
 
+def tokenize_to_file(in_name: str, start_line = 0, end_line = -1):
     timestr = time.strftime("%Y%m%d-%H%M%S")
     out_name = f'{in_name}__{timestr}_{start_line}-{end_line}.dat'
 
@@ -177,16 +177,6 @@ def tokenize_to_file(in_name: str, start_line = 0, end_line = -1):
 
 if __name__ == "__main__":
 
-    # print('XSSed...')
-    # with open('dec_xss_urls.txt', 'r') as infile, \
-    #     open('dec_xss_urls.dat', 'ab') as outfile:
-    #     lines = infile.read().splitlines()
-    #     for i in range(10):
-    #         url = choice(lines)
-    #         tmp = URLTokens(url, tokenize(url))
-    #         print_token_list(tmp)
-            # dump(tmp, outfile)
-
     start_i = 0
     end_i = -1
     if len(argv) > 1:
@@ -195,18 +185,6 @@ if __name__ == "__main__":
         if len(argv) > 2:
             end_i = argv[2]
 
-    # tokenize_to_file('dmoz_dir.txt', int(start_i), int(end_i))
-    # tokenize_to_file('dec_xss_urls.txt', int(start_i), int(end_i))
-
-    # tokenize_to_std('dec_xss_urls.txt', int(start_i))
-    # tokenize_to_std('dmoz_dir.txt', int(start_i))
-
-    # tokenize_to_std('dec_xss_urls.txt', 10)
-    # tokenize_to_std('dmoz_dir.txt', 10)
-
-    # print(f"{longest_url('dec_xss_urls.txt__20211203-134417_0--1.dat')}")
-    # print(f"{longest_url('dmoz_dir.txt__20211203-134415_0--1.dat')}")
-    url = 'http://website/search.php?uid=ws848d8024088c327.36898031\&src=\&term=<script>alert(123)</script>\&args=qs=06o'
-    tmp = URLTokens(url, tokenize(url))
-    print_token_list(tmp)
+    tokenize_to_file('dmoz_dir.txt', int(start_i), int(end_i))
+    tokenize_to_file('dec_xss_urls.txt', int(start_i), int(end_i))
         
