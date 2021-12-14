@@ -26,4 +26,4 @@ The code for training the models:
 [Primary Model](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/lstm_softmax.py),
 [Sigmoid Output](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/lstm_sigmoid.py),
 [No Embedding Layer](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/lstm_sequence.py),
-[Randomly initialized Embedding Layer](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/lstm_random_embed.py)
+[Randomly Initialized Embedding Layer](https://github.com/dawson-brown/DeeperXSS/blob/main/xss_filters/lstm_random_embed.py)
