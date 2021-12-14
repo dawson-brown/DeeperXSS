@@ -1,5 +1,5 @@
 # generate files
-*.pickle
+xss_filters/*.pickle
 *.model
 cbow_model_token_type
 cbow_model_token_value
