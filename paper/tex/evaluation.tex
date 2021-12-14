@@ -46,6 +46,31 @@
     \hline
 \end{tabular}
 \endgroup
-\caption{\label{comparison}Model Comparison.}
+\caption{\label{comparison}Token Value Model Comparison.}
 \end{center}
 \end{table}
+
+\begin{table}
+    \begin{center}
+    \begingroup
+    \setlength{\tabcolsep}{4pt} % Default value: 6pt
+    \renewcommand{\arraystretch}{1.5} % Default value: 1
+    \begin{tabular}{|| c | c | c | c | c ||} 
+        \hline
+        Model & Precision & Recall & F1 & Accuracy \\ 
+        \hline\hline
+        \textbf{DeepXSS} &  0.995 & 0.979 & 0.987 & n/a \\ 
+        \hline
+        \textbf{DeeperXSS:softmax} & 0.989 & 0.978 & 0.981 & 0.982 \\
+        \hline
+        \textbf{DeeperXSS:sigmoid} & 0.987 & 0.977 & 0.982 & 0.983 \\
+        \hline
+        \textbf{DeeperXSS:sequence} & 0.983 & 0.955 & 0.969 & 0.97 \\
+        \hline
+        \textbf{DeeperXSS:random} & 0.089 & 0.091 & 0.08 & 0.555 \\
+        \hline
+    \end{tabular}
+    \endgroup
+    \caption{\label{type:comparison}Token Type Model Comparison.}
+    \end{center}
+    \end{table}
