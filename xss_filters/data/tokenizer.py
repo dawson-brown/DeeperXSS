@@ -9,15 +9,12 @@ from sys import argv
 import time
 
 
-
-# 'num_arg' : re.compile('[0-9]+\.?[0-9]*\)'),
-# 'function_name': re.compile('(?:[a-zA-Z$_][a-zA-Z$_0-9]*\.)*[a-zA-Z$_][a-zA-Z$_0-9]*\('),
+# partial token set (identifiers are further distinguish in tokenize function)
 tokens = {
     'start_label': re.compile('<[^>\s/]+(>|\s|/)'),
     'end_label': re.compile('</[^>/]+>'),
     'events': re.compile('on[a-zA-Z]+='),
     'identifier': re.compile('(?:[a-zA-Z$_0-9\-]+\.)*[a-zA-Z$_][a-zA-Z$_0-9\-]*'),
-    # 'string_arg' : re.compile('\s*(\"(?:(\\(\\|n|r|\')|[^\\\n\r\"])*\"|\'(?:(\\(\\|n|r|\")|[^\\\n\r\'])*\')\s*\)'),
     'int_constant': re.compile('[0-9]+\.?[0-9]*'),
     'other': re.compile('<|>|\+|-|\*')
 }
@@ -80,33 +77,53 @@ def tokenize(url_full: str) -> List[JSToken]:
             if token_type == 'start_label':
                 tokens_to_append = [JSToken(token_type, (matched.group(0)[:-1] + '>').lower(), matched.start(), matched.end()) ]
             elif token_type == 'identifier':
+
+                # function name
                 if matched.end() < len(url) and url[matched.end()]  == '(':
                     tokens_to_append = [JSToken('function_name', matched.group(0).lower(), matched.start(), matched.end()) ]
                     arg_end = url.find(')', matched.end())
                     if arg_end != -1:
                         args = url[matched.end()+1:arg_end].strip()
+
+                        # integer argument
                         if args.isdigit():
                             tokens_to_append.append(JSToken('int_arg', '(1)', matched.end(), arg_end+1))
+                        
+                        # string argument
                         else:
                             tokens_to_append.append(JSToken('str_arg', '("str_arg")', matched.end(), arg_end+1))
+                
+                # LHS assignment
                 elif matched.end() < len(url) and url[matched.end()]  == '=':
                     tokens_to_append = [JSToken('assignment', f'assign{num_assign}' + '=', matched.start(), matched.end())]
                     num_assign+=1
+                
+                # RHS assignment
                 elif url[matched.start()-1]  == '=':
                     tokens_to_append = [JSToken('value', f'val{num_vals}', matched.start(), matched.end())]
                     num_vals+=1
+                
+                # Script URL
                 elif matched.end() < len(url) and url[matched.end()]  == ':' and matched.group(0).lower().endswith('script'):
                     tokens_to_append = [JSToken('script_url', matched.group(0).lower(), matched.start(), matched.end())]
+                
+                # Path
                 elif matched.end() < len(url) and (url[matched.end()]  == '/' or url[matched.end()]  == '?'):
                     tokens_to_append = [JSToken('path', f'path{num_paths}' + '/', matched.start(), matched.end())]
                     num_paths+=1
                 elif matched.end() == len(url) and url[matched.start() - 1] == '/':
                     tokens_to_append = [JSToken('path', matched.group(0).lower(), matched.start(), matched.end())]
+                
+                # Generic identifier
                 else:
                     tokens_to_append = [JSToken('identifier', f'identifier{num_idens}', matched.start(), matched.end())]
                     num_idens+=1
+            
+            # Integer constand
             elif token_type == 'int_constant':
                 tokens_to_append = [JSToken(token_type, '1', matched.start(), matched.end())]
+            
+            # Other
             else:
                 tokens_to_append = [JSToken(token_type, matched.group(0).lower(), matched.start(), matched.end())]
 

@@ -4,6 +4,7 @@ import numpy as np
 from metrics import get_precision, get_recall, get_f1, get_accuracy
 
 
+# Bleach XSS sanitizer
 def xss_sanitizer(filename: str):
     total_sanitized = 0
     total_not_sanitized = 0
@@ -20,6 +21,7 @@ def xss_sanitizer(filename: str):
     print(f'total: {total}, total sanitized: {total_sanitized}, total not sanitized: {total_not_sanitized}')
 
 
+# simple filter that looks for HTML tags
 def tag_search(dmoz: str, xss: str):
 
     open_script = re.compile('<[^>]*>', re.IGNORECASE)
@@ -32,6 +34,8 @@ def tag_search(dmoz: str, xss: str):
         results = []
         for url in lines:
             expected.append(0)
+
+            # for each URL in dmoz look for open and closing tags
             if len(open_script.findall(url)) > 0 or len(close_script.findall(url)) > 0:
                 results.append(1)
             else:
@@ -41,6 +45,8 @@ def tag_search(dmoz: str, xss: str):
         lines = xss_f.read().splitlines()
         for url in lines:
             expected.append(1)
+
+            # for each URL in xssed look for open and closing tags
             if len(open_script.findall(url)) > 0 or len(close_script.findall(url)) > 0:
                 results.append(1)
             else:

@@ -13,6 +13,7 @@ class DeepURL:
         if url is not None:
             self.url = urlparse(url)
 
+        # all single decoders
         self._decodings = [
             self._de_url_decode,
             self._de_html_decode,
@@ -64,31 +65,35 @@ class DeepURL:
             return (False, query_string)
 
 
-    def _de_decode(self, query_string : str) -> Tuple[bool, str]:
+    def _de_decode(self, encoded_string : str) -> Tuple[bool, str]:
 
-        if query_string == '':
-            return (False, query_string)
+        # empty strings can't be decoded
+        if encoded_string == '':
+            return (False, encoded_string)
 
+        # run all single decoders 
         all_decodings = list()
         for decoder in self._decodings:
-            all_decodings.append( decoder(query_string) )
+            all_decodings.append( decoder(encoded_string) )
 
         some_decoded = False
         for past, dec_str in all_decodings:
             some_decoded = some_decoded or past
             if past:
+                # attempt to further decode strings that successfully decoded
                 (next_past, next_dec_str) = self._de_decode(dec_str)
                 if next_past:
                     return (True, next_dec_str)
 
         if some_decoded:
-            return (False, query_string)
+            return (False, encoded_string)
         else:
-            return (True, query_string)
+            return (True, encoded_string)
 
 
     def decode_url(self) -> Tuple[bool, str]:
         
+        # recursively decode each segment of the URL
         dec_q, dec_query = self._de_decode(self.url.query)   
         dec_p, dec_path = self._de_decode(self.url.path)
         deq_pa, dec_params = self._de_decode(self.url.params)
@@ -107,26 +112,30 @@ class DeepURL:
             tmp_url )
 
 
-with open('dec_xss_urls.txt', 'w') as dec_outfile,\
-    open('n_dec_xss_urls.txt', 'w') as n_dec_outfile,\
-    open('xss_urls.json', 'r') as infile:
-    lines = infile.read().splitlines()
-    decode_strings = set()
+def main():
+    with open('dec_xss_urls.txt', 'w') as dec_outfile,\
+        open('n_dec_xss_urls.txt', 'w') as n_dec_outfile,\
+        open('xss_urls.json', 'r') as infile:
+        
+        lines = infile.read().splitlines()
+        decode_strings = set()
 
-    for i, line in enumerate(lines):
-        clean_line = line[9:]
-        clean_line = clean_line[:-3]
+        for i, line in enumerate(lines):
+            clean_line = line[9:]
+            clean_line = clean_line[:-3]
 
-        url = DeepURL(url=clean_line)
-        decoded, decoded_str = url.decode_url()
+            url = DeepURL(url=clean_line)
+            decoded, decoded_str = url.decode_url()
 
-        if decoded:
-            decode_strings.add(decoded_str)
-        else:
-            n_dec_outfile.write(clean_line)
-            n_dec_outfile.write('\n')
+            if decoded:
+                decode_strings.add(decoded_str)
+            else:
+                n_dec_outfile.write(clean_line)
+                n_dec_outfile.write('\n')
 
-    for dec_str in decode_strings:
-        dec_outfile.write(dec_str)
-        dec_outfile.write('\n')
+        for dec_str in decode_strings:
+            dec_outfile.write(dec_str)
+            dec_outfile.write('\n')
 
+if __name__ == '__main__':
+    main()

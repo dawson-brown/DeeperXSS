@@ -15,6 +15,7 @@ models = [
 ]
 
 
+# Average the 10-fold cross validations and write them to a file for each model
 def print_avg_results_to_file(model_name: str, results: dict) -> None:
     
     precision = 0
@@ -39,10 +40,12 @@ def print_avg_results_to_file(model_name: str, results: dict) -> None:
 
 def main():
     
+    # run all the models using Token value sequences
     for name, model in models:
         results = model("value")
         print_avg_results_to_file(f'{name}-value', results)
 
+    # run all the models using Token type sequences
     for name, model in models:
         results = model("type")
         print_avg_results_to_file(f'{name}-type', results)
