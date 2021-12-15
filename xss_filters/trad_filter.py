@@ -60,7 +60,6 @@ def tag_search(dmoz: str, xss: str):
 
 
 def main():
-    # print(f"{tag_search('data/dmoz_dir.txt', 'data/dec_xss_urls.txt')}")
     xss_sanitizer('data/dec_xss_urls.txt')
     xss_sanitizer('data/xss_urls.txt')
 

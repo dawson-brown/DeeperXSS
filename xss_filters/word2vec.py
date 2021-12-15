@@ -28,6 +28,10 @@ import pickle as pk
 from pickle import dump, load
 from data.tokenizer import URLTokens, JSToken 
 
+## token contents = value or type for the cbow trained for token.type or token.value respectively
+TOKEN_CONTENTS = "type"
+TRAINING = False
+
 
 ## Word2vec using CBOW
 ## used for reference:
@@ -52,13 +56,11 @@ def get_data_and_labels(token_contents, vocab, bin_labels: Tuple[Any, Any]):
     tokenized_urls = []
     for i, tokenized_url in enumerate(load_tokenized_urls('data/dmoz_dir.txt__20211203-134415_0--1.dat')):
         tokenized_urls.append(tokenized_url) ## 0 for benign
-        # labels.append(np.array([1,0]))
         labels.append(bin_labels[0])
 
     #load malicious urls
     for i, tokenized_url in enumerate(load_tokenized_urls('data/dec_xss_urls.txt__20211203-134417_0--1.dat')):
         tokenized_urls.append(tokenized_url) ## 1 for malicious
-        # labels.append(np.array([0,1]))
         labels.append(bin_labels[1])
 
     vector_urls = []
@@ -147,7 +149,7 @@ def generate_context_word_pairs(corpus, window_size, vocab_size):
             
             yield (x, y)
 
-def init_CBOW(vocab_size, embed_size, window_size):
+def init_CBOW(vocab_size, embed_size, window_size): ## init CBOW architecture
     cbow = Sequential()
     cbow.add(Embedding(input_dim=vocab_size, output_dim=embed_size, input_length=window_size*2))
     cbow.add(Lambda(lambda x: K.mean(x, axis=1), output_shape=(embed_size,)))
@@ -159,7 +161,7 @@ def init_CBOW(vocab_size, embed_size, window_size):
 
     return cbow
 
-def train_CBOW(token_contents, num_epochs):
+def train_CBOW(token_contents, num_epochs=10):
 
     if token_contents == "type":
         vocab_name = "vocab_type.pickle"
@@ -182,9 +184,6 @@ def train_CBOW(token_contents, num_epochs):
         for token in tokenized_url.token_list:
             token_dict = dc.asdict(token)
             tokens.append(token_dict[token_contents])
-        # if i > 500: ##for testing purposes
-        #     break
-
     #load malicious urls
     for i, tokenized_url in enumerate(load_tokenized_urls('data\dec_xss_urls.txt__20211203-134417_0--1.dat')):
         
@@ -193,10 +192,6 @@ def train_CBOW(token_contents, num_epochs):
         for token in tokenized_url.token_list:
             token_dict = dc.asdict(token)
             tokens.append(token_dict[token_contents])
-        # if i > 500: ##for testing purposes
-        #     break
-
-    ## DO NOT SHUFFLE TOKENS OR YOU WILL NEVER BE ABLE TO PROPERLY RECREATE THE MODEL
 
     ## CBOW
 
@@ -249,22 +244,34 @@ def train_CBOW(token_contents, num_epochs):
 
 
 def main():
+
+    if TOKEN_CONTENTS == "type":
+        vocab_name = "vocab_type.pickle"
+        inv_vocab_name = "inv_vocab_type.pickle"
+        model_name = "cbow_model_token_type"
+    else:
+        vocab_name = "vocab_value.pickle"
+        inv_vocab_name = "inv_vocab_value.pickle"
+        model_name = "cbow_model_token_value"
+
+    ## do not train unless you have a lot of time
+    if TRAINING:
+        train_CBOW(TOKEN_CONTENTS)
+
     
-    # train_CBOW("value", 5)
+    ## specify CBOW model to load
+    cbow = keras.models.load_model(model_name)
 
-    cbow = keras.models.load_model('cbow_model_token_type')
-
-    with open('vocab_type.pickle', 'rb') as handle:
+    ## specify token contents
+    with open(vocab_name, 'rb') as handle:
         vocab = pk.load(handle)
-    with open('inv_vocab_type.pickle', 'rb') as handle:
+    with open(inv_vocab_name, 'rb') as handle:
         inverse_vocab = pk.load(handle)
 
 
     weights = cbow.get_weights()[0]
     weights = weights[1:]
     print(weights.shape)
-
-    # print(pd.DataFrame(weights, index=list(inverse_vocab.values())[1:]).head())
 
     from sklearn.metrics.pairwise import euclidean_distances
 
